@@ -1,0 +1,67 @@
+---
+title: "gather"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(fivethirtyeight)
+
+```
+
+```{r}
+#data_1 <- read.table("raw_data/usa_00001.dat.gz")
+
+#View(data_1)
+```
+# NOTE: To load data, you must download both the extract's data and the DDI
+# and also set the working directory to the folder with these files (or change the path below).
+
+if (!require("ipumsr")) stop("Reading IPUMS data into R requires the ipumsr package. It can be installed using the following command: install.packages('ipumsr')")
+
+ddi <- read_ipums_ddi("usa_00001.xml")
+data <- read_ipums_micro(ddi)
+
+```{r}
+susp_team <- nfl_suspensions %>%
+  group_by(team) %>%
+  summarize(sus_count = n(), .groups = "keep") %>%
+  
+  #No need to filter here because the summarize only applies to the team column,
+  #because that's how the groups were formed. Therefore, only team and the
+  #summary column "sus_count" will be shown.
+  
+  filter(team != "FREE") %>% 
+  
+  #Filter function here filters to include only the rows NOT with team ==
+  #"FREE". In this case, I think that removes the free agents who received
+  #suspensions.
+  
+  ggplot(aes(team, sus_count)) +
+  geom_col(fill = "limegreen", color = "white") +
+  
+  #color = "white" has the effect of spacing out the bars.
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90,
+                                   vjust = .5,
+                                   hjust = 1)) +
+  
+  #the theme(axis... = 1) code chunk makes the x-axis labels vertical (i.e. the
+  #angle 90 degree), and vjust and hjust help to center the axis labels below
+  #the respective bars
+  
+  labs(title = "NFL Suspensions By Team All-time",
+       x = "Name of NFL Team",
+       y = "Number of Suspensions")
+ 
+  #Graph labels code chunk
+ 
+susp_team
+
+View(nfl_suspensions)
+
+```
+
