@@ -8,60 +8,243 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(dplyr)
 library(fivethirtyeight)
+library(ipumsr)
+library(janitor)
 
 ```
 
 ```{r}
-#data_1 <- read.table("raw_data/usa_00001.dat.gz")
 
-#View(data_1)
+nhgis_data_acs <- read_csv("raw_data/nhgis_data/nhgis0001_csv/nhgis0001_ds239_20185_2018_sd_elm.csv") %>% 
+  select_if( ~ sum(!is.na(.)) > 0) %>% 
+  filter(STATE == "Oklahoma") %>% 
+  View()
+
+spec(nhgis_data_acs)
+
+
+View(nhgis_data_acs)
+  col_type = (cols(
+  GISJOIN = col_character(),
+  YEAR = col_character(),
+  REGIONA = col_logical(),
+  DIVISIONA = col_logical(),
+  STATE = col_character(),
+  STATEA = col_character(),
+  COUNTYA = col_logical(),
+  COUSUBA = col_logical(),
+  PLACEA = col_logical(),
+  TRACTA = col_logical(),
+  BLKGRPA = col_logical(),
+  CONCITA = col_logical(),
+  AIANHHA = col_logical(),
+  RES_ONLYA = col_logical(),
+  TRUSTA = col_logical(),
+  AITSCEA = col_logical(),
+  ANRCA = col_logical(),
+  CBSAA = col_logical(),
+  CSAA = col_logical(),
+  METDIVA = col_logical(),
+  NECTAA = col_logical(),
+  CNECTAA = col_logical(),
+  NECTADIVA = col_logical(),
+  UAA = col_logical(),
+  CDCURRA = col_logical(),
+  SLDUA = col_logical(),
+  SLDLA = col_logical(),
+  ZCTA5A = col_logical(),
+  SUBMCDA = col_logical(),
+  SDELM = col_character(),
+  SDELMA = col_character(),
+  SDSECA = col_logical(),
+  SDUNIA = col_logical(),
+  PUMA5A = col_logical(),
+  BTTRA = col_logical(),
+  BTBGA = col_logical(),
+  NAME_E = col_character(),
+  AJWME001 = col_double(),
+  AJWNE001 = col_double(),
+  AJWNE002 = col_double(),
+  AJWNE003 = col_double(),
+  AJWNE004 = col_double(),
+  AJWNE005 = col_double(),
+  AJWNE006 = col_double(),
+  AJWNE007 = col_double(),
+  AJWNE008 = col_double(),
+  AJWNE009 = col_double(),
+  AJWNE010 = col_double(),
+  AJY4E001 = col_double(),
+  AJY4E002 = col_double(),
+  AJY4E003 = col_double(),
+  AJY4E004 = col_double(),
+  AJY4E005 = col_double(),
+  AJY4E006 = col_double(),
+  AJY4E007 = col_double(),
+  AJY4E008 = col_double(),
+  AJY7E001 = col_double(),
+  AJY7E002 = col_double(),
+  AJY7E003 = col_double(),
+  AJY7E004 = col_double(),
+  AJY7E005 = col_double(),
+  AJY7E006 = col_double(),
+  AJY7E007 = col_double(),
+  AJY7E008 = col_double(),
+  AJY7E009 = col_double(),
+  AJY7E010 = col_double(),
+  AJY7E011 = col_double(),
+  AJY7E012 = col_double(),
+  AJY7E013 = col_double(),
+  AJY7E014 = col_double(),
+  AJY7E015 = col_double(),
+  AJY7E016 = col_double(),
+  AJY7E017 = col_double(),
+  AJY7E018 = col_double(),
+  AJY7E019 = col_double(),
+  AJY7E020 = col_double(),
+  AJY7E021 = col_double(),
+  AJY7E022 = col_double(),
+  AJY7E023 = col_double(),
+  AJY7E024 = col_double(),
+  AJY7E025 = col_double(),
+  AJY7E026 = col_double(),
+  AJY7E027 = col_double(),
+  AJY7E028 = col_double(),
+  AJY7E029 = col_double(),
+  AJY7E030 = col_double(),
+  AJY7E031 = col_double(),
+  AJY7E032 = col_double(),
+  AJY7E033 = col_double(),
+  AJY7E034 = col_double(),
+  AJY7E035 = col_double(),
+  AJY7E036 = col_double(),
+  AJY7E037 = col_double(),
+  AJY7E038 = col_double(),
+  AJY7E039 = col_double(),
+  AJY7E040 = col_double(),
+  AJY7E041 = col_double(),
+  AJY7E042 = col_double(),
+  AJY7E043 = col_double(),
+  AJY7E044 = col_double(),
+  AJY7E045 = col_double(),
+  AJY7E046 = col_double(),
+  AJY7E047 = col_double(),
+  AJY7E048 = col_double(),
+  AJY7E049 = col_double(),
+  AJY7E050 = col_double(),
+  AJY7E051 = col_double(),
+  AJY7E052 = col_double(),
+  AJY7E053 = col_double(),
+  AJY7E054 = col_double(),
+  AJY7E055 = col_double(),
+  AJY7E056 = col_double(),
+  AJY7E057 = col_double(),
+  AJY7E058 = col_double(),
+  AJY7E059 = col_double(),
+  AJZAE001 = col_double(),
+  NAME_M = col_character(),
+  AJWMM001 = col_double(),
+  AJWNM001 = col_double(),
+  AJWNM002 = col_double(),
+  AJWNM003 = col_double(),
+  AJWNM004 = col_double(),
+  AJWNM005 = col_double(),
+  AJWNM006 = col_double(),
+  AJWNM007 = col_double(),
+  AJWNM008 = col_double(),
+  AJWNM009 = col_double(),
+  AJWNM010 = col_double(),
+  AJY4M001 = col_double(),
+  AJY4M002 = col_double(),
+  AJY4M003 = col_double(),
+  AJY4M004 = col_double(),
+  AJY4M005 = col_double(),
+  AJY4M006 = col_double(),
+  AJY4M007 = col_double(),
+  AJY4M008 = col_double(),
+  AJY7M001 = col_double(),
+  AJY7M002 = col_double(),
+  AJY7M003 = col_double(),
+  AJY7M004 = col_double(),
+  AJY7M005 = col_double(),
+  AJY7M006 = col_double(),
+  AJY7M007 = col_double(),
+  AJY7M008 = col_double(),
+  AJY7M009 = col_double(),
+  AJY7M010 = col_double(),
+  AJY7M011 = col_double(),
+  AJY7M012 = col_double(),
+  AJY7M013 = col_double(),
+  AJY7M014 = col_double(),
+  AJY7M015 = col_double(),
+  AJY7M016 = col_double(),
+  AJY7M017 = col_double(),
+  AJY7M018 = col_double(),
+  AJY7M019 = col_double(),
+  AJY7M020 = col_double(),
+  AJY7M021 = col_double(),
+  AJY7M022 = col_double(),
+  AJY7M023 = col_double(),
+  AJY7M024 = col_double(),
+  AJY7M025 = col_double(),
+  AJY7M026 = col_double(),
+  AJY7M027 = col_double(),
+  AJY7M028 = col_double(),
+  AJY7M029 = col_double(),
+  AJY7M030 = col_double(),
+  AJY7M031 = col_double(),
+  AJY7M032 = col_double(),
+  AJY7M033 = col_double(),
+  AJY7M034 = col_double(),
+  AJY7M035 = col_double(),
+  AJY7M036 = col_double(),
+  AJY7M037 = col_double(),
+  AJY7M038 = col_double(),
+  AJY7M039 = col_double(),
+  AJY7M040 = col_double(),
+  AJY7M041 = col_double(),
+  AJY7M042 = col_double(),
+  AJY7M043 = col_double(),
+  AJY7M044 = col_double(),
+  AJY7M045 = col_double(),
+  AJY7M046 = col_double(),
+  AJY7M047 = col_double(),
+  AJY7M048 = col_double(),
+  AJY7M049 = col_double(),
+  AJY7M050 = col_double(),
+  AJY7M051 = col_double(),
+  AJY7M052 = col_double(),
+  AJY7M053 = col_double(),
+  AJY7M054 = col_double(),
+  AJY7M055 = col_double(),
+  AJY7M056 = col_double(),
+  AJY7M057 = col_double(),
+  AJY7M058 = col_double(),
+  AJY7M059 = col_double(),
+  AJZAM001 = col_double()))
+
+spec(nhgis_data_acs)
+
+nhgis_data_acs %>% 
+  filter(STATE  == "Oklahoma") %>% 
+  rename(total = AJWNE001, 
+         white = AJWNE002,
+         black = AJWNE003,
+         native_amer = AJWNE004,
+         asian = AJWNE005,
+         pac_islander = AJWNE006,
+         other = AJWNE007,
+         two_or_more = AJWNE008) %>% 
+  rename()
+
+  select_if( ~ sum(!is.na(.)) > 0) %>% 
+  View()
+
+#+ clean_names()
+
 ```
-# NOTE: To load data, you must download both the extract's data and the DDI
-# and also set the working directory to the folder with these files (or change the path below).
 
-if (!require("ipumsr")) stop("Reading IPUMS data into R requires the ipumsr package. It can be installed using the following command: install.packages('ipumsr')")
 
-ddi <- read_ipums_ddi("usa_00001.xml")
-data <- read_ipums_micro(ddi)
 
-```{r}
-susp_team <- nfl_suspensions %>%
-  group_by(team) %>%
-  summarize(sus_count = n(), .groups = "keep") %>%
-  
-  #No need to filter here because the summarize only applies to the team column,
-  #because that's how the groups were formed. Therefore, only team and the
-  #summary column "sus_count" will be shown.
-  
-  filter(team != "FREE") %>% 
-  
-  #Filter function here filters to include only the rows NOT with team ==
-  #"FREE". In this case, I think that removes the free agents who received
-  #suspensions.
-  
-  ggplot(aes(team, sus_count)) +
-  geom_col(fill = "limegreen", color = "white") +
-  
-  #color = "white" has the effect of spacing out the bars.
-  
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 90,
-                                   vjust = .5,
-                                   hjust = 1)) +
-  
-  #the theme(axis... = 1) code chunk makes the x-axis labels vertical (i.e. the
-  #angle 90 degree), and vjust and hjust help to center the axis labels below
-  #the respective bars
-  
-  labs(title = "NFL Suspensions By Team All-time",
-       x = "Name of NFL Team",
-       y = "Number of Suspensions")
- 
-  #Graph labels code chunk
- 
-susp_team
 
-View(nfl_suspensions)
 
-```
 
