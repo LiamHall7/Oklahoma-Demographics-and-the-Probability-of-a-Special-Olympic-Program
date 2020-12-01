@@ -12,8 +12,9 @@ library(ipumsr)
 library(janitor)
 library(leaflet)
 library(sf)
+library(rstanarm)
 library(readxl)
-
+library(tools)
 ```
 
 ```{r}
@@ -360,6 +361,7 @@ school_elm[99, 12] = "Remainder of Oklahoma (elm)"
 ```{r data_join}
 all_school <- bind_rows(school_elm, school_unif)
 
+
 # all_location <- bind_rows(elm_location, unif_location)
 
 # by = c("total_pop", "white", "black", "native_amer", "asian", "pac_islander", "other", "two_or_more", "median_house_income", "capita_income", "GISJOIN", "type", "sd")) 
@@ -383,6 +385,15 @@ all_location <- bind_rows(elm_location, unif_location)
 # 
 all_location <-sf::st_transform(all_location, crs="+init=epsg:4326")
 
+all_location <- all_location %>% 
+  mutate(log_na = log(native_amer + 1)) %>% 
+  mutate(na_percent = (native_amer/total_pop),
+         white_percent = (white/total_pop),
+         black_percent = (black/total_pop), 
+         asian_percent = (asian/total_pop),
+         pi_percent = (pac_islander/total_pop), 
+         other_race_percent = (other/total_pop), 
+         mixed_race_percent = (two_or_more/total_pop))
 
 pal <- colorNumeric("viridis", NULL)
 
@@ -391,16 +402,61 @@ pal <- colorNumeric("viridis", NULL)
 leaflet(all_location) %>%
   addTiles() %>%
   addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
-              fillColor = ~pal(native_amer)) %>%
-  addLegend(pal = pal, values = ~ native_amer, opacity = 1.0)
+              fillColor = ~pal(na_percent)) %>%
+  addLegend(pal = pal, values = ~ na_percent, opacity = 1.0)
 
-#how to show more gradient in the scale
+#how to show more gradient in the scale? 
+
+#how to incorporate whether or not SO is present in the school district(i.e. how
+#to make a column with 0 and 1's according to whether SO is in the district)
+
 
 
 ```
+
+```{r model}
+
+posterior <- stan_glm(data = all_school,
+                      formula = native_amer ~ median_house_income + capita_income,
+                      refresh = 0)
+
+print(posterior, digits = 4)
+
+gt_summary 
+
+#write out equation. Interpret the math. Compare groups. Make predictions for community in Oklahoma for lowest income OK town and middle income, etc -- two posteriors.
+
+```
+
 ```{r}
 
+sook_schools <- read_excel("raw_data/year_12_sook_school_list.xlsx") %>% 
+  mutate(sook = sook_schools$District %in% all_school$sd_clean)
 
+sook_schools[16, 4] = "Midwest City-Del City"
+
+all_school <- all_school %>% 
+  mutate(sd_clean = str_replace(sd, pattern = " Public School\\w*", replacement = ""),
+         sd_clean = str_replace(sd_clean, pattern = " Unified Schools", replacement = ""),
+         sd_clean = str_replace(sd_clean, pattern = " Schools", replacement = "")) %>% 
+  filter(!(sd %in% c("Remainder of Oklahoma (elm)", "Remainder of Oklahoma (unif)"))) %>% 
+  mutate(sook = if_else(all_school$sd_clean %in% sook_schools$District, 1, 0))
+
+
+all_school[120, 14] = "Arapaho-Butler"
+all_school[185, 14] = "Choctaw-Nicoma Park"
+
+?match
+
+sum(if_else(all_school$sd_clean %in% sook_schools$District, 1, 0))
+
+?unique
+#   mutate(sook = map( ~ all_school$sd_clean %in% sook_schools$District))
+# 
+# View(all)
+#the w says there might be another character, but it's optional
+
+?map_lgl
 ```
 
 
