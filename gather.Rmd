@@ -10,239 +10,492 @@ library(dplyr)
 library(fivethirtyeight)
 library(ipumsr)
 library(janitor)
+library(leaflet)
+library(sf)
+library(readxl)
 
 ```
 
 ```{r}
+# nhgis_data_acs <- read_csv("raw_data/nhgis_data/nhgis0001_csv/nhgis0001_ds239_20185_2018_sd_elm.csv", 
+#                            col_type = cols(
+#   GISJOIN = col_character(),
+#   YEAR = col_character(),
+#   REGIONA = col_logical(),
+#   DIVISIONA = col_logical(),
+#   STATE = col_character(),
+#   STATEA = col_character(),
+#   COUNTYA = col_logical(),
+#   COUSUBA = col_logical(),
+#   PLACEA = col_logical(),
+#   TRACTA = col_logical(),
+#   BLKGRPA = col_logical(),
+#   CONCITA = col_logical(),
+#   AIANHHA = col_logical(),
+#   RES_ONLYA = col_logical(),
+#   TRUSTA = col_logical(),
+#   AITSCEA = col_logical(),
+#   ANRCA = col_logical(),
+#   CBSAA = col_logical(),
+#   CSAA = col_logical(),
+#   METDIVA = col_logical(),
+#   NECTAA = col_logical(),
+#   CNECTAA = col_logical(),
+#   NECTADIVA = col_logical(),
+#   UAA = col_logical(),
+#   CDCURRA = col_logical(),
+#   SLDUA = col_logical(),
+#   SLDLA = col_logical(),
+#   ZCTA5A = col_logical(),
+#   SUBMCDA = col_logical(),
+#   SDELM = col_character(),
+#   SDELMA = col_character(),
+#   SDSECA = col_logical(),
+#   SDUNIA = col_logical(),
+#   PUMA5A = col_logical(),
+#   BTTRA = col_logical(),
+#   BTBGA = col_logical(),
+#   NAME_E = col_character(),
+#   AJWME001 = col_double(),
+#   AJWNE001 = col_double(),
+#   AJWNE002 = col_double(),
+#   AJWNE003 = col_double(),
+#   AJWNE004 = col_double(),
+#   AJWNE005 = col_double(),
+#   AJWNE006 = col_double(),
+#   AJWNE007 = col_double(),
+#   AJWNE008 = col_double(),
+#   AJWNE009 = col_double(),
+#   AJWNE010 = col_double(),
+#   AJY4E001 = col_double(),
+#   AJY4E002 = col_double(),
+#   AJY4E003 = col_double(),
+#   AJY4E004 = col_double(),
+#   AJY4E005 = col_double(),
+#   AJY4E006 = col_double(),
+#   AJY4E007 = col_double(),
+#   AJY4E008 = col_double(),
+#   AJY7E001 = col_double(),
+#   AJY7E002 = col_double(),
+#   AJY7E003 = col_double(),
+#   AJY7E004 = col_double(),
+#   AJY7E005 = col_double(),
+#   AJY7E006 = col_double(),
+#   AJY7E007 = col_double(),
+#   AJY7E008 = col_double(),
+#   AJY7E009 = col_double(),
+#   AJY7E010 = col_double(),
+#   AJY7E011 = col_double(),
+#   AJY7E012 = col_double(),
+#   AJY7E013 = col_double(),
+#   AJY7E014 = col_double(),
+#   AJY7E015 = col_double(),
+#   AJY7E016 = col_double(),
+#   AJY7E017 = col_double(),
+#   AJY7E018 = col_double(),
+#   AJY7E019 = col_double(),
+#   AJY7E020 = col_double(),
+#   AJY7E021 = col_double(),
+#   AJY7E022 = col_double(),
+#   AJY7E023 = col_double(),
+#   AJY7E024 = col_double(),
+#   AJY7E025 = col_double(),
+#   AJY7E026 = col_double(),
+#   AJY7E027 = col_double(),
+#   AJY7E028 = col_double(),
+#   AJY7E029 = col_double(),
+#   AJY7E030 = col_double(),
+#   AJY7E031 = col_double(),
+#   AJY7E032 = col_double(),
+#   AJY7E033 = col_double(),
+#   AJY7E034 = col_double(),
+#   AJY7E035 = col_double(),
+#   AJY7E036 = col_double(),
+#   AJY7E037 = col_double(),
+#   AJY7E038 = col_double(),
+#   AJY7E039 = col_double(),
+#   AJY7E040 = col_double(),
+#   AJY7E041 = col_double(),
+#   AJY7E042 = col_double(),
+#   AJY7E043 = col_double(),
+#   AJY7E044 = col_double(),
+#   AJY7E045 = col_double(),
+#   AJY7E046 = col_double(),
+#   AJY7E047 = col_double(),
+#   AJY7E048 = col_double(),
+#   AJY7E049 = col_double(),
+#   AJY7E050 = col_double(),
+#   AJY7E051 = col_double(),
+#   AJY7E052 = col_double(),
+#   AJY7E053 = col_double(),
+#   AJY7E054 = col_double(),
+#   AJY7E055 = col_double(),
+#   AJY7E056 = col_double(),
+#   AJY7E057 = col_double(),
+#   AJY7E058 = col_double(),
+#   AJY7E059 = col_double(),
+#   AJZAE001 = col_double(),
+#   NAME_M = col_character(),
+#   AJWMM001 = col_double(),
+#   AJWNM001 = col_double(),
+#   AJWNM002 = col_double(),
+#   AJWNM003 = col_double(),
+#   AJWNM004 = col_double(),
+#   AJWNM005 = col_double(),
+#   AJWNM006 = col_double(),
+#   AJWNM007 = col_double(),
+#   AJWNM008 = col_double(),
+#   AJWNM009 = col_double(),
+#   AJWNM010 = col_double(),
+#   AJY4M001 = col_double(),
+#   AJY4M002 = col_double(),
+#   AJY4M003 = col_double(),
+#   AJY4M004 = col_double(),
+#   AJY4M005 = col_double(),
+#   AJY4M006 = col_double(),
+#   AJY4M007 = col_double(),
+#   AJY4M008 = col_double(),
+#   AJY7M001 = col_double(),
+#   AJY7M002 = col_double(),
+#   AJY7M003 = col_double(),
+#   AJY7M004 = col_double(),
+#   AJY7M005 = col_double(),
+#   AJY7M006 = col_double(),
+#   AJY7M007 = col_double(),
+#   AJY7M008 = col_double(),
+#   AJY7M009 = col_double(),
+#   AJY7M010 = col_double(),
+#   AJY7M011 = col_double(),
+#   AJY7M012 = col_double(),
+#   AJY7M013 = col_double(),
+#   AJY7M014 = col_double(),
+#   AJY7M015 = col_double(),
+#   AJY7M016 = col_double(),
+#   AJY7M017 = col_double(),
+#   AJY7M018 = col_double(),
+#   AJY7M019 = col_double(),
+#   AJY7M020 = col_double(),
+#   AJY7M021 = col_double(),
+#   AJY7M022 = col_double(),
+#   AJY7M023 = col_double(),
+#   AJY7M024 = col_double(),
+#   AJY7M025 = col_double(),
+#   AJY7M026 = col_double(),
+#   AJY7M027 = col_double(),
+#   AJY7M028 = col_double(),
+#   AJY7M029 = col_double(),
+#   AJY7M030 = col_double(),
+#   AJY7M031 = col_double(),
+#   AJY7M032 = col_double(),
+#   AJY7M033 = col_double(),
+#   AJY7M034 = col_double(),
+#   AJY7M035 = col_double(),
+#   AJY7M036 = col_double(),
+#   AJY7M037 = col_double(),
+#   AJY7M038 = col_double(),
+#   AJY7M039 = col_double(),
+#   AJY7M040 = col_double(),
+#   AJY7M041 = col_double(),
+#   AJY7M042 = col_double(),
+#   AJY7M043 = col_double(),
+#   AJY7M044 = col_double(),
+#   AJY7M045 = col_double(),
+#   AJY7M046 = col_double(),
+#   AJY7M047 = col_double(),
+#   AJY7M048 = col_double(),
+#   AJY7M049 = col_double(),
+#   AJY7M050 = col_double(),
+#   AJY7M051 = col_double(),
+#   AJY7M052 = col_double(),
+#   AJY7M053 = col_double(),
+#   AJY7M054 = col_double(),
+#   AJY7M055 = col_double(),
+#   AJY7M056 = col_double(),
+#   AJY7M057 = col_double(),
+#   AJY7M058 = col_double(),
+#   AJY7M059 = col_double(),
+#   AJZAM001 = col_double())) %>% 
+#   select_if( ~ sum(!is.na(.)) > 0) %>% 
+#   filter(STATE == "Oklahoma")
+```
 
-nhgis_data_acs <- read_csv("raw_data/nhgis_data/nhgis0001_csv/nhgis0001_ds239_20185_2018_sd_elm.csv") %>% 
-  select_if( ~ sum(!is.na(.)) > 0) %>% 
+
+```{r}
+#spec(nhgis_data_acs)
+#above code will give us the column specifications (i.e. character, logical, 
+#etc.)
+# 
+# nhgis_data_acs <- nhgis_data_acs %>% 
+#  # select_if( ~ sum(!is.na(.)) > 0) %>% 
+#   rename(total_pop = AJWNE001, 
+#          white = AJWNE002,
+#          black = AJWNE003,
+#          native_amer = AJWNE004,
+#          asian = AJWNE005,
+#          pac_islander = AJWNE006,
+#          other = AJWNE007,
+#          two_or_more = AJWNE008) %>% 
+#   rename(total_households = AJY7E001,
+#          total_house_poverty = AJY7E002) %>% 
+#   rename(sd_elem = SDELM) %>% 
+#   select(total_pop, white, black, native_amer, asian,
+#          pac_islander, other, two_or_more, total_households,
+#          total_house_poverty, sd_elem, GISJOIN)
+```
+
+```{r read_ins}
+okla_district <- read_excel("raw_data/oklahoma_schools/OnlineDirectoryDistrictList.xls")
+okla_schools <- read_excel("raw_data/oklahoma_schools/OnlineDirectorySiteList.xls")
+
+
+new_nhgis_data <- read_csv("raw_data/new_nhgis_data/nhgis0002_ds239_20185_2018_sd_uni.csv") %>% 
+  filter(STATE == "Oklahoma")
+
+nhgis_sec <- read_csv("raw_data/all_nhgis_schools/nhgis0004_csv/nhgis0004_ds239_20185_2018_sd_sec.csv") %>% 
   filter(STATE == "Oklahoma") %>% 
-  View()
+  select_if( ~ sum(!is.na(.)) > 0)
 
-spec(nhgis_data_acs)
+nhgis_elm <- read_csv("raw_data/all_nhgis_schools/nhgis0004_csv/nhgis0004_ds239_20185_2018_sd_elm.csv") %>% 
+  filter(STATE == "Oklahoma") %>% 
+  select_if( ~ sum(!is.na(.)) > 0)
+
+nhgis_unif <- read_csv("raw_data/all_nhgis_schools/nhgis0004_csv/nhgis0004_ds239_20185_2018_sd_uni.csv") %>% 
+  filter(STATE == "Oklahoma") %>% 
+  select_if( ~ sum(!is.na(.)) > 0)
+```
+```{r location_files}
+
+elm_location <- sf::st_read(dsn = "raw_data/all_nhgis_schools/nhgis0004_shape/nhgis0004_shapefile_tl2018_us_sd_elm_2018",
+                         layer = "US_sd_elm_2018")
+
+elm_location <- sf::st_transform(elm_location,  crs="+init=epsg:4326")
 
 
-View(nhgis_data_acs)
-  col_type = (cols(
-  GISJOIN = col_character(),
-  YEAR = col_character(),
-  REGIONA = col_logical(),
-  DIVISIONA = col_logical(),
-  STATE = col_character(),
-  STATEA = col_character(),
-  COUNTYA = col_logical(),
-  COUSUBA = col_logical(),
-  PLACEA = col_logical(),
-  TRACTA = col_logical(),
-  BLKGRPA = col_logical(),
-  CONCITA = col_logical(),
-  AIANHHA = col_logical(),
-  RES_ONLYA = col_logical(),
-  TRUSTA = col_logical(),
-  AITSCEA = col_logical(),
-  ANRCA = col_logical(),
-  CBSAA = col_logical(),
-  CSAA = col_logical(),
-  METDIVA = col_logical(),
-  NECTAA = col_logical(),
-  CNECTAA = col_logical(),
-  NECTADIVA = col_logical(),
-  UAA = col_logical(),
-  CDCURRA = col_logical(),
-  SLDUA = col_logical(),
-  SLDLA = col_logical(),
-  ZCTA5A = col_logical(),
-  SUBMCDA = col_logical(),
-  SDELM = col_character(),
-  SDELMA = col_character(),
-  SDSECA = col_logical(),
-  SDUNIA = col_logical(),
-  PUMA5A = col_logical(),
-  BTTRA = col_logical(),
-  BTBGA = col_logical(),
-  NAME_E = col_character(),
-  AJWME001 = col_double(),
-  AJWNE001 = col_double(),
-  AJWNE002 = col_double(),
-  AJWNE003 = col_double(),
-  AJWNE004 = col_double(),
-  AJWNE005 = col_double(),
-  AJWNE006 = col_double(),
-  AJWNE007 = col_double(),
-  AJWNE008 = col_double(),
-  AJWNE009 = col_double(),
-  AJWNE010 = col_double(),
-  AJY4E001 = col_double(),
-  AJY4E002 = col_double(),
-  AJY4E003 = col_double(),
-  AJY4E004 = col_double(),
-  AJY4E005 = col_double(),
-  AJY4E006 = col_double(),
-  AJY4E007 = col_double(),
-  AJY4E008 = col_double(),
-  AJY7E001 = col_double(),
-  AJY7E002 = col_double(),
-  AJY7E003 = col_double(),
-  AJY7E004 = col_double(),
-  AJY7E005 = col_double(),
-  AJY7E006 = col_double(),
-  AJY7E007 = col_double(),
-  AJY7E008 = col_double(),
-  AJY7E009 = col_double(),
-  AJY7E010 = col_double(),
-  AJY7E011 = col_double(),
-  AJY7E012 = col_double(),
-  AJY7E013 = col_double(),
-  AJY7E014 = col_double(),
-  AJY7E015 = col_double(),
-  AJY7E016 = col_double(),
-  AJY7E017 = col_double(),
-  AJY7E018 = col_double(),
-  AJY7E019 = col_double(),
-  AJY7E020 = col_double(),
-  AJY7E021 = col_double(),
-  AJY7E022 = col_double(),
-  AJY7E023 = col_double(),
-  AJY7E024 = col_double(),
-  AJY7E025 = col_double(),
-  AJY7E026 = col_double(),
-  AJY7E027 = col_double(),
-  AJY7E028 = col_double(),
-  AJY7E029 = col_double(),
-  AJY7E030 = col_double(),
-  AJY7E031 = col_double(),
-  AJY7E032 = col_double(),
-  AJY7E033 = col_double(),
-  AJY7E034 = col_double(),
-  AJY7E035 = col_double(),
-  AJY7E036 = col_double(),
-  AJY7E037 = col_double(),
-  AJY7E038 = col_double(),
-  AJY7E039 = col_double(),
-  AJY7E040 = col_double(),
-  AJY7E041 = col_double(),
-  AJY7E042 = col_double(),
-  AJY7E043 = col_double(),
-  AJY7E044 = col_double(),
-  AJY7E045 = col_double(),
-  AJY7E046 = col_double(),
-  AJY7E047 = col_double(),
-  AJY7E048 = col_double(),
-  AJY7E049 = col_double(),
-  AJY7E050 = col_double(),
-  AJY7E051 = col_double(),
-  AJY7E052 = col_double(),
-  AJY7E053 = col_double(),
-  AJY7E054 = col_double(),
-  AJY7E055 = col_double(),
-  AJY7E056 = col_double(),
-  AJY7E057 = col_double(),
-  AJY7E058 = col_double(),
-  AJY7E059 = col_double(),
-  AJZAE001 = col_double(),
-  NAME_M = col_character(),
-  AJWMM001 = col_double(),
-  AJWNM001 = col_double(),
-  AJWNM002 = col_double(),
-  AJWNM003 = col_double(),
-  AJWNM004 = col_double(),
-  AJWNM005 = col_double(),
-  AJWNM006 = col_double(),
-  AJWNM007 = col_double(),
-  AJWNM008 = col_double(),
-  AJWNM009 = col_double(),
-  AJWNM010 = col_double(),
-  AJY4M001 = col_double(),
-  AJY4M002 = col_double(),
-  AJY4M003 = col_double(),
-  AJY4M004 = col_double(),
-  AJY4M005 = col_double(),
-  AJY4M006 = col_double(),
-  AJY4M007 = col_double(),
-  AJY4M008 = col_double(),
-  AJY7M001 = col_double(),
-  AJY7M002 = col_double(),
-  AJY7M003 = col_double(),
-  AJY7M004 = col_double(),
-  AJY7M005 = col_double(),
-  AJY7M006 = col_double(),
-  AJY7M007 = col_double(),
-  AJY7M008 = col_double(),
-  AJY7M009 = col_double(),
-  AJY7M010 = col_double(),
-  AJY7M011 = col_double(),
-  AJY7M012 = col_double(),
-  AJY7M013 = col_double(),
-  AJY7M014 = col_double(),
-  AJY7M015 = col_double(),
-  AJY7M016 = col_double(),
-  AJY7M017 = col_double(),
-  AJY7M018 = col_double(),
-  AJY7M019 = col_double(),
-  AJY7M020 = col_double(),
-  AJY7M021 = col_double(),
-  AJY7M022 = col_double(),
-  AJY7M023 = col_double(),
-  AJY7M024 = col_double(),
-  AJY7M025 = col_double(),
-  AJY7M026 = col_double(),
-  AJY7M027 = col_double(),
-  AJY7M028 = col_double(),
-  AJY7M029 = col_double(),
-  AJY7M030 = col_double(),
-  AJY7M031 = col_double(),
-  AJY7M032 = col_double(),
-  AJY7M033 = col_double(),
-  AJY7M034 = col_double(),
-  AJY7M035 = col_double(),
-  AJY7M036 = col_double(),
-  AJY7M037 = col_double(),
-  AJY7M038 = col_double(),
-  AJY7M039 = col_double(),
-  AJY7M040 = col_double(),
-  AJY7M041 = col_double(),
-  AJY7M042 = col_double(),
-  AJY7M043 = col_double(),
-  AJY7M044 = col_double(),
-  AJY7M045 = col_double(),
-  AJY7M046 = col_double(),
-  AJY7M047 = col_double(),
-  AJY7M048 = col_double(),
-  AJY7M049 = col_double(),
-  AJY7M050 = col_double(),
-  AJY7M051 = col_double(),
-  AJY7M052 = col_double(),
-  AJY7M053 = col_double(),
-  AJY7M054 = col_double(),
-  AJY7M055 = col_double(),
-  AJY7M056 = col_double(),
-  AJY7M057 = col_double(),
-  AJY7M058 = col_double(),
-  AJY7M059 = col_double(),
-  AJZAM001 = col_double()))
+unif_location <- sf::st_read(dsn = "raw_data/all_nhgis_schools/nhgis0004_shape/nhgis0004_shapefile_tl2018_us_sd_uni_2018",
+                         layer = "US_sd_uni_2018")
 
-spec(nhgis_data_acs)
+unif_location <- sf::st_transform(unif_location,  crs="+init=epsg:4326")
 
-nhgis_data_acs %>% 
-  filter(STATE  == "Oklahoma") %>% 
-  rename(total = AJWNE001, 
+# *Select New York observations only using NHGISST variable
+# NHGISST should be consistent between census years, but you might need to double-check this
+# if you try 1960, 1970.
+# *The NHGISST code is 360 for New York because New York's FIPS code is 360. Google
+# New York FIPS code for more information about the FIPS system.
+# *Need to have spdplyr package loaded to use tidyverse commands on
+# SpatialPolygonsDataFrame aka `filter' and 'mutate'
+# *Join the data1950 data with the MedianHHIncome variable by 'GISJOIN'
+# so that the tract lines and income data are in one object
+# *Subset to Manhattan county, which has FIPS code 061
+# *Can see other NY county fips codes at https://simple.wikipedia.org/wiki/List_of_counties_in_New_York
+
+```
+
+```{r table_names}
+#school_uni dataset is taken from ACS data from 2014-2018
+
+school_sec <- nhgis_sec %>% 
+  rename(total_pop = AJWNE001,
          white = AJWNE002,
          black = AJWNE003,
          native_amer = AJWNE004,
          asian = AJWNE005,
          pac_islander = AJWNE006,
          other = AJWNE007,
-         two_or_more = AJWNE008) %>% 
-  rename()
+         two_or_more = AJWNE008) %>%
+  rename(median_house_income = AJZAE001,
+         capita_income = AJ0EE001,
+         sd = SDSEC) %>% 
+  select(total_pop, white, black, native_amer, asian,
+  pac_islander, other, two_or_more, median_house_income, capita_income,
+  GISJOIN, sd) %>% 
+  mutate(type = 2)
 
-  select_if( ~ sum(!is.na(.)) > 0) %>% 
-  View()
+school_sec[3, 12] = "Remainder of Oklahoma (sec)"
 
-#+ clean_names()
+school_unif <- nhgis_unif %>% 
+    rename(total_pop = AJWNE001,
+         white = AJWNE002,
+         black = AJWNE003,
+         native_amer = AJWNE004,
+         asian = AJWNE005,
+         pac_islander = AJWNE006,
+         other = AJWNE007,
+         two_or_more = AJWNE008) %>%
+  rename(median_house_income = AJZAE001,
+         capita_income = AJ0EE001,
+         sd = SDUNI) %>% 
+  select(total_pop, white, black, native_amer, asian,
+  pac_islander, other, two_or_more, median_house_income, capita_income, 
+  GISJOIN, sd) %>% 
+  mutate(type = 0) 
+  # merge(unif_location)
+
+school_unif[416, 12] = "Remainder of Oklahoma (unif)"
+
+school_elm <- nhgis_elm %>% 
+  rename(total_pop = AJWNE001,
+         white = AJWNE002,
+         black = AJWNE003,
+         native_amer = AJWNE004,
+         asian = AJWNE005,
+         pac_islander = AJWNE006,
+         other = AJWNE007,
+         two_or_more = AJWNE008) %>%
+  rename(median_house_income = AJZAE001,
+         capita_income = AJ0EE001,
+         sd = SDELM) %>% 
+  select(total_pop, white, black, native_amer, asian,
+  pac_islander, other, two_or_more, median_house_income, capita_income,
+  GISJOIN, sd) %>% 
+  mutate(type = 1) 
+  # merge(elm_location)
+
+school_elm[99, 12] = "Remainder of Oklahoma (elm)"
+
+#school_uni$sd_uni == substr(school_uni$NAME_E,1,nchar(school_uni$NAME_E)-10)
+
+#used above line to make sure that the NAME_E column is the same as SDUNI in the original dataset. They are the same, except of the ", Oklahoma" at the end of the
+```
+
+```{r data_join}
+all_school <- bind_rows(school_elm, school_unif)
+
+# all_location <- bind_rows(elm_location, unif_location)
+
+# by = c("total_pop", "white", "black", "native_amer", "asian", "pac_islander", "other", "two_or_more", "median_house_income", "capita_income", "GISJOIN", "type", "sd")) 
 
 ```
 
+
+
+```{r}
+elm_location <-
+  elm_location %>%
+  merge(school_elm, "GISJOIN") 
+
+unif_location <- 
+  unif_location %>% 
+  merge(school_unif, "GISJOIN")
+
+all_location <- bind_rows(elm_location, unif_location)
+
+# Set projection of tracts dataset to `projection` required by leaflet
+# 
+all_location <-sf::st_transform(all_location, crs="+init=epsg:4326")
+
+
+pal <- colorNumeric("viridis", NULL)
+
+#  Plot the data
+
+leaflet(all_location) %>%
+  addTiles() %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+              fillColor = ~pal(native_amer)) %>%
+  addLegend(pal = pal, values = ~ native_amer, opacity = 1.0)
+
+#how to show more gradient in the scale
+
+
+```
+```{r}
+
+
+```
+
+
+```{r}
+# sec_location <- sf::st_read(dsn = "raw_data/all_nhgis_schools/nhgis0004_shape/nhgis0004_shapefile_tl2018_us_sd_sec_2018",
+#                          layer = "US_sd_sec_2018")
+# 
+# sec_location <- sf::st_transform(sec_location,  crs="+init=epsg:4326")
+# 
+# # *Select New York observations only using NHGISST variable
+# # NHGISST should be consistent between census years, but you might need to double-check this
+# # if you try 1960, 1970.
+# # *The NHGISST code is 360 for New York because New York's FIPS code is 360. Google
+# # New York FIPS code for more information about the FIPS system.
+# # *Need to have spdplyr package loaded to use tidyverse commands on
+# # SpatialPolygonsDataFrame aka `filter' and 'mutate'
+# # *Join the data1950 data with the MedianHHIncome variable by 'GISJOIN'
+# # so that the tract lines and income data are in one object
+# # *Subset to Manhattan county, which has FIPS code 061
+# # *Can see other NY county fips codes at https://simple.wikipedia.org/wiki/List_of_counties_in_New_York
+# 
+# sec_location <-
+#   sec_location %>%
+#   merge(school_elm, "GISJOIN")
+# 
+# 
+# # Set projection of tracts dataset to `projection` required by leaflet
+# # 
+# sec_location <-sf::st_transform(sec_location, crs="+init=epsg:4326")
+# 
+# 
+# pal <- colorNumeric("viridis", NULL)
+# 
+# #  Plot the data
+# 
+# leaflet(sec_location) %>%
+#   addTiles() %>%
+#   addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+#               fillColor = ~pal(median_house_income)) %>%
+#   addLegend(pal = pal, values = ~median_house_income, opacity = 1.0)
+# 
+# ```
+# 
+# ```{r}
+# locations_unif <- sf::st_read(dsn = "raw_data/new_nhgis_data/nhgis0003_shape",
+#                          layer = "US_sd_uni_2018")
+# 
+# locations_unif <- sf::st_transform(locations_unif,  crs="+init=epsg:4326")
+# 
+# locations_unif <-
+#   locations_unif %>%
+#   merge(school_uni, "GISJOIN")
+# 
+# # Set projection of tracts dataset to `projection` required by leaflet
+# 
+# locations_unif <-sf::st_transform(locations_unif, crs="+init=epsg:4326")
+# 
+# 
+# pal <- colorNumeric("viridis", NULL)
+# 
+# leaflet(locations_unif) %>%
+#   addTiles() %>%
+#   addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+#               fillColor = ~ pal(median_house_income)) %>%
+#   addLegend(pal = pal, values = ~ median_house_income, opacity = 1.0)
+# 
+# 
+# 
+# 
+# ```
+# 
+# ```{r}
+# locations_unif <- sf::st_read(dsn = "raw_data/new_nhgis_data/nhgis0003_shape",
+#                          layer = "US_sd_uni_2018")
+# 
+# locations_unif <- sf::st_transform(locations_unif,  crs="+init=epsg:4326")
+# 
+# locations_unif <-
+#   locations_unif %>%
+#   merge(school_uni, "GISJOIN")
+# 
+# # Set projection of tracts dataset to `projection` required by leaflet
+# 
+# locations_unif <-sf::st_transform(locations_unif, crs="+init=epsg:4326")
+# 
+# 
+# pal <- colorNumeric("viridis", NULL)
+# 
+# leaflet(locations_unif) %>%
+#   addTiles() %>%
+#   addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+#               fillColor = ~ pal(median_house_income)) %>%
+#   addLegend(pal = pal, values = ~ median_house_income, opacity = 1.0)
+
+```
 
 
 
