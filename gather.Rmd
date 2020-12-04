@@ -13,6 +13,7 @@ library(janitor)
 library(leaflet)
 library(sf)
 library(rstanarm)
+library(ggplot2)
 library(readxl)
 library(tools)
 ```
@@ -361,10 +362,33 @@ school_elm[99, 12] = "Remainder of Oklahoma (elm)"
 ```{r data_join}
 all_school <- bind_rows(school_elm, school_unif)
 
+all_school <- all_school %>% 
+  mutate(sd_clean = str_replace(sd, pattern = " Public School\\w*", replacement = ""),
+         sd_clean = str_replace(sd_clean, pattern = " Unified Schools", replacement = ""),
+         sd_clean = str_replace(sd_clean, pattern = " Schools", replacement = ""))
 
 # all_location <- bind_rows(elm_location, unif_location)
 
 # by = c("total_pop", "white", "black", "native_amer", "asian", "pac_islander", "other", "two_or_more", "median_house_income", "capita_income", "GISJOIN", "type", "sd")) 
+
+
+sook_schools <- read_excel("raw_data/year_12_sook_school_list.xlsx")
+
+sook_schools[16, 4] = "Midwest City-Del City"
+all_school[120, 14] = "Arapaho-Butler"
+all_school[185, 14] = "Choctaw-Nicoma Park"
+
+all_school <- all_school %>% 
+  mutate(sook = if_else(all_school$sd_clean %in% sook_schools$District, 1, 0)) %>% 
+  filter(!(sd %in% c("Remainder of Oklahoma (elm)", "Remainder of Oklahoma (unif)"))) %>% 
+  mutate(log_na = log(native_amer + 1)) %>% 
+  mutate(na_percent = (native_amer/total_pop),
+         white_percent = (white/total_pop),
+         black_percent = (black/total_pop), 
+         asian_percent = (asian/total_pop),
+         pi_percent = (pac_islander/total_pop), 
+         other_race_percent = (other/total_pop), 
+         mixed_race_percent = (two_or_more/total_pop)) 
 
 ```
 
@@ -383,7 +407,6 @@ all_location <- bind_rows(elm_location, unif_location)
 
 # Set projection of tracts dataset to `projection` required by leaflet
 # 
-all_location <-sf::st_transform(all_location, crs="+init=epsg:4326")
 
 all_location <- all_location %>% 
   mutate(log_na = log(native_amer + 1)) %>% 
@@ -393,17 +416,39 @@ all_location <- all_location %>%
          asian_percent = (asian/total_pop),
          pi_percent = (pac_islander/total_pop), 
          other_race_percent = (other/total_pop), 
-         mixed_race_percent = (two_or_more/total_pop))
+         mixed_race_percent = (two_or_more/total_pop)) %>% 
+  mutate(sd_clean = str_replace(sd, pattern = " Public School\\w*", replacement = ""),
+         sd_clean = str_replace(sd_clean, pattern = " Unified Schools", replacement = ""),
+         sd_clean = str_replace(sd_clean, pattern = " Schools", replacement = "")) %>% 
+  mutate(median_house_income = median_house_income/10000, 
+         capita_income = capita_income/10000) %>% 
+  filter(!(sd %in% c("Remainder of Oklahoma (elm)", "Remainder of Oklahoma (unif)"))) %>% 
+  mutate(sook = if_else(all_school$sd_clean %in% sook_schools$District, "1", "0"))
+
+all_location <-sf::st_transform(all_location, crs="+init=epsg:4326")
+
+saveRDS(all_location, file = "all.RDS")
 
 pal <- colorNumeric("viridis", NULL)
 
+factpal <- colorFactor(topo.colors(5), all_location$sook)
 #  Plot the data
 
 leaflet(all_location) %>%
   addTiles() %>%
   addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
-              fillColor = ~pal(na_percent)) %>%
-  addLegend(pal = pal, values = ~ na_percent, opacity = 1.0)
+              fillColor = ~ factpal(sook)) %>%
+  addLegend(pal = factpal, values = ~ sook, opacity = 1.0)
+
+#factpal for binary or integer. pal for everything else.
+  
+leaflet(all_location) %>%
+  addTiles() %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+              fillColor = ~ pal(median_house_income)) %>%
+  addLegend(pal = pal, values = ~ median_house_income, opacity = 1.0)
+
+
 
 #how to show more gradient in the scale? 
 
@@ -416,47 +461,43 @@ leaflet(all_location) %>%
 
 ```{r model}
 
-posterior <- stan_glm(data = all_school,
-                      formula = native_amer ~ median_house_income + capita_income,
-                      refresh = 0)
+posterior <-
+  stan_glm(data = all_school,
+           formula = sook ~ median_house_income + capita_income + na_percent,
+           refresh = 0,
+           family = binomial())
 
-print(posterior, digits = 4)
+print(posterior, digits = 5)
 
-gt_summary 
+# gtsummary::posterior
+
+
+# logistic regression, theyre log odds coefficients
+
+# gt_summary 
 
 #write out equation. Interpret the math. Compare groups. Make predictions for community in Oklahoma for lowest income OK town and middle income, etc -- two posteriors.
+# 
+# 
+# equation <- Median_intercept + (median_income * 10) + (capita_income * 10 + (percent_na * median of na_percent))
+
+# You need to include the income predictors inside the exp function. So the coefficient for median income and per capita income.
+
+equation <- 2.99636 + (.00001 * 10) + (.00002 * 10) + (na_percent * -4.57314) 
+
+x <- tibble(NA_Pct = 1:100, Intercept = -2.99636) %>% 
+  mutate(Probability = 
+           exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 10) + (.00001 * 10))/
+  (1 + exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 10) + (.00001 * 10)))) %>% 
+  ggplot(aes(Intercept, Probability)) + geom_line()
+
+x
 
 ```
 
 ```{r}
 
-sook_schools <- read_excel("raw_data/year_12_sook_school_list.xlsx") %>% 
-  mutate(sook = sook_schools$District %in% all_school$sd_clean)
 
-sook_schools[16, 4] = "Midwest City-Del City"
-
-all_school <- all_school %>% 
-  mutate(sd_clean = str_replace(sd, pattern = " Public School\\w*", replacement = ""),
-         sd_clean = str_replace(sd_clean, pattern = " Unified Schools", replacement = ""),
-         sd_clean = str_replace(sd_clean, pattern = " Schools", replacement = "")) %>% 
-  filter(!(sd %in% c("Remainder of Oklahoma (elm)", "Remainder of Oklahoma (unif)"))) %>% 
-  mutate(sook = if_else(all_school$sd_clean %in% sook_schools$District, 1, 0))
-
-
-all_school[120, 14] = "Arapaho-Butler"
-all_school[185, 14] = "Choctaw-Nicoma Park"
-
-?match
-
-sum(if_else(all_school$sd_clean %in% sook_schools$District, 1, 0))
-
-?unique
-#   mutate(sook = map( ~ all_school$sd_clean %in% sook_schools$District))
-# 
-# View(all)
-#the w says there might be another character, but it's optional
-
-?map_lgl
 ```
 
 
