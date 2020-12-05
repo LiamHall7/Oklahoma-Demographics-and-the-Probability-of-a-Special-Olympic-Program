@@ -390,6 +390,8 @@ all_school <- all_school %>%
          other_race_percent = (other/total_pop), 
          mixed_race_percent = (two_or_more/total_pop)) 
 
+saveRDS(all_school, file = "school.RDS")
+
 ```
 
 
@@ -434,6 +436,7 @@ pal <- colorNumeric("viridis", NULL)
 factpal <- colorFactor(topo.colors(5), all_location$sook)
 #  Plot the data
 
+
 leaflet(all_location) %>%
   addTiles() %>%
   addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
@@ -445,8 +448,8 @@ leaflet(all_location) %>%
 leaflet(all_location) %>%
   addTiles() %>%
   addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
-              fillColor = ~ pal(median_house_income)) %>%
-  addLegend(pal = pal, values = ~ median_house_income, opacity = 1.0)
+              fillColor = ~ pal(mixed_race_percent)) %>%
+  addLegend(pal = pal, values = ~ mixed_race_percent, opacity = 1.0)
 
 
 
@@ -504,7 +507,7 @@ x
 ```{r}
 # sec_location <- sf::st_read(dsn = "raw_data/all_nhgis_schools/nhgis0004_shape/nhgis0004_shapefile_tl2018_us_sd_sec_2018",
 #                          layer = "US_sd_sec_2018")
-# 
+
 # sec_location <- sf::st_transform(sec_location,  crs="+init=epsg:4326")
 # 
 # # *Select New York observations only using NHGISST variable
