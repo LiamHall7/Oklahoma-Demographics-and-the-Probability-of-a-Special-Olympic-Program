@@ -448,8 +448,8 @@ leaflet(all_location) %>%
 leaflet(all_location) %>%
   addTiles() %>%
   addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
-              fillColor = ~ pal(mixed_race_percent)) %>%
-  addLegend(pal = pal, values = ~ mixed_race_percent, opacity = 1.0)
+              fillColor = ~ pal(sook)) %>%
+  addLegend(pal = pal, values = ~ sook, opacity = 1.0)
 
 
 
@@ -472,6 +472,8 @@ posterior <-
 
 print(posterior, digits = 5)
 
+
+saveRDS(posterior, file = "stan.RDS")
 # gtsummary::posterior
 
 
