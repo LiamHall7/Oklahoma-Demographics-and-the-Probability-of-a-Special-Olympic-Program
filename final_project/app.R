@@ -1,11 +1,5 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
+
+#OKLAHOMA DEMOGRAPHICS SHINY APP
 
 library(readr)
 library(ggforce)
@@ -18,7 +12,6 @@ library(shinythemes)
 library(dplyr)
 library(ipumsr)
 library(sf)
-library(rstanarm)
 library(readxl)
 library(tools)
 
@@ -32,14 +25,22 @@ ui <-   navbarPage("Oklahoma School District Demographics",
                    theme = shinytheme("cosmo"),
                    windowTitle = "Oklahoma School Demographics", 
                    
+                   #above section names the app, sets the theme of the app
+                   #design, and names the tab on the browser.
+                   
   navbarMenu("Demographic Maps by School District",    
 
+             #names the tab that has the drop downs named below.
              
     tabPanel("Racial and Ethnic Groups",
              
              h3(strong("Welcome to my Final Project!")), 
              p("Below is an interactive plot that will map different factors
-               and their respective densities throughout the state of Oklahoma."),
+               and their respective densities throughout the state of
+               Oklahoma."),
+             
+             #sidebar creates the drop down for different variables.
+             
                   sidebarLayout(
                     selectInput("group", label = "Group",
                                 choices = c("Total Population",
@@ -61,9 +62,12 @@ ui <-   navbarPage("Oklahoma School District Demographics",
                  
     tabPanel("Economic Status", 
              
+             #This section is the same as above.
+             
              h3(strong("Welcome to my Final Project!")), 
              p("Below is an interactive plot that will map different factors
-               and their respective densities throughout the state of Oklahoma."),
+               and their respective densities throughout the state of
+               Oklahoma."),
              
                   sidebarLayout(
                     selectInput("econ", label = "Economic",
@@ -77,6 +81,13 @@ ui <-   navbarPage("Oklahoma School District Demographics",
     tabPanel("Model",
              fluidPage(
                  h3("Welcome to my Model page!"),
+                 
+                 #the p() argument is normal text. The different h() arguments
+                 #create titles or "headlines" of a certain size, so you can
+                 #have multiple h3() functions. The number isn't for listing the 
+                 #number of headlines, but to determine the size of those 
+                 #headlines.
+                 
                  p("My model predicts the likelihood 
                  that a given public school in the state of Oklahoma has a 
                  Special Olympics Unified Champion (UCS) School Program based on the
@@ -118,9 +129,13 @@ ui <-   navbarPage("Oklahoma School District Demographics",
                    relationship between likelihood of a UCS Program and the 
                    proportion of Native Americans in that school district, 
                    regardless of the economic attributes of the school. The
-                   model suggests that the likelihood of a UCS Program in a school decreases
-                   as the percentage of Native Americans within the school increases."),
+                   model suggests that the likelihood of a UCS Program in a 
+                   school decreases as the percentage of Native Americans within
+                   the school increases."),
                  
+                 
+                 #watch the parentheses, make sure they line up and close around
+                 #the right sections or things won't run, or won't run properly
                  
                  mainPanel(
                      plotOutput("hundkmodel"),
@@ -143,7 +158,9 @@ ui <-   navbarPage("Oklahoma School District Demographics",
              restaurants, are from local, sustainable sources. 
              And by that I mean the American Community Survey's publicly
              accessible datasets, available through",
+                   
                a("NHGIS.", href = "https://data2.nhgis.org/"),
+               
              "Because school districts
              are relatively small in
              Oklahoma (and school demographic information was hard to publicly
@@ -169,14 +186,13 @@ ui <-   navbarPage("Oklahoma School District Demographics",
              This is a link to my", 
               
               
-               a("repo.", href = "https://github.com/LiamHall7/final_project"))),
+              a("repo.", href = "https://github.com/LiamHall7/final_project"))),
 
     ))
     
     
-    #Adelson looks like he does something different. He saves the leaflets and
-    #loads them back in by reading them in?
-
+    #you can read in different leaflets to show different outputs, or use the
+#strategy I used below to substitute inputs.
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
@@ -265,6 +281,8 @@ server <- function(input, output, session) {
         }
                
         pal <- colorNumeric("viridis", NULL)
+        
+        #viridis sets up the color palette (that's what pal is short for).
  
         leaflet(all_location) %>%
             addTiles() %>%
@@ -291,7 +309,8 @@ server <- function(input, output, session) {
             addTiles() %>%
             addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
                         fillColor = ~ pal(x)) %>%
-            addLegend(pal = pal, values = ~ x * 10000, title = y, position = "topright",  opacity = 1.0)
+            addLegend(pal = pal, values = ~ x * 10000, title = y,
+                      position = "topright",  opacity = 1.0)
                 
         
     })
@@ -300,7 +319,8 @@ server <- function(input, output, session) {
         
         # posterior <-
         #     stan_glm(data = all_school,
-        #              formula = sook ~ median_house_income + capita_income + na_percent,
+        #              formula = sook ~ median_house_income + capita_income + 
+        #                        na_percent,
         #              refresh = 0,
         #              family = binomial())
         
@@ -349,43 +369,4 @@ server <- function(input, output, session) {
 }
 
 
-# Run the application 
-
-# Define UI for application that draws a histogram
-# ui <- fluidPage(
-# 
-#     # Application title
-#     titlePanel("Old Faithful Geyser Data"),
-# 
-#     # Sidebar with a slider input for number of bins 
-#     sidebarLayout(
-#         sidebarPanel(
-#             sliderInput("bins",
-#                         "Number of bins:",
-#                         min = 1,
-#                         max = 50,
-#                         value = 30)
-#         ),
-# 
-#         # Show a plot of the generated distribution
-#         mainPanel(
-#            plotOutput("distPlot")
-#         )
-#     )
-# )
-
-# # Define server logic required to draw a histogram
-# server <- function(input, output) {
-# 
-#     output$distPlot <- renderPlot({
-#         # generate bins based on input$bins from ui.R
-#         x    <- faithful[, 2]
-#         bins <- seq(min(x), max(x), length.out = input$bins + 1)
-# 
-#         # draw the histogram with the specified number of bins
-#         hist(x, breaks = bins, col = 'darkgray', border = 'white')
-#     })
-# }
-# 
-# # Run the application 
 shinyApp(ui = ui, server = server)
