@@ -50,6 +50,8 @@ ui <-   navbarPage("Oklahoma School District Demographics",
                                             "White (Percent)",
                                             "Black",
                                             "Black (Percent)",
+                                            "Hispanic",
+                                            "Hispanic (Percent)",
                                             "Asian",
                                             "Asian (Percent)",
                                             "Mixed Race",
@@ -76,6 +78,11 @@ ui <-   navbarPage("Oklahoma School District Demographics",
             
             mainPanel(
                 leafletOutput("econ_map", width = "100%"))))),
+  
+    tabPanel("Special Olympics Schools",
+             
+             mainPanel(
+               leafletOutput("sook_map", width = "100%"))),  
     
 
     tabPanel("Model",
@@ -143,7 +150,10 @@ ui <-   navbarPage("Oklahoma School District Demographics",
                     
                      #the br() adds a break between lines or plots, etc.
                      
-                     plotOutput("medianmodel")
+                     plotOutput("medianmodel"),
+                     br(), 
+                     
+                     plotOutput("whitemodel")
              ))),
     
     tabPanel("About",
@@ -186,7 +196,7 @@ ui <-   navbarPage("Oklahoma School District Demographics",
              This is a link to my", 
               
               
-              a("repo.", href = "https://github.com/LiamHall7/final_project"))),
+              a("repo.", href = "https://github.com/LiamHall7/Oklahoma-Demographics-and-the-Probability-of-a-Special-Olympic-Program"))),
 
     ))
     
@@ -224,6 +234,14 @@ server <- function(input, output, session) {
             y = 1
             w = "Population"
         }
+      
+      
+        else if(input$group == "Hispanic") {
+            x = all_location$hispanic
+            y = 1
+            w = "Population"
+        }
+    
         
         else if(input$group == "Asian") {
             x = all_location$asian
@@ -260,7 +278,12 @@ server <- function(input, output, session) {
             y = 100
             w = "Percent"
         }
-        
+        else if(input$group == "Hispanic (Percent)") {
+            x = all_location$hisp_percent
+            y = 100
+            w = "Percent"
+        }
+      
         else if(input$group == "Asian (Percent)") {
             x = all_location$asian_percent
             y = 100
@@ -271,7 +294,7 @@ server <- function(input, output, session) {
             x = all_location$mixed_race_percent
             y = 100
             w = "Percent"
-     }
+        }
         
         else if(input$group == "Pacific Islander (Percent)") {
             x = all_location$pi_percent
@@ -314,7 +337,19 @@ server <- function(input, output, session) {
                 
         
     })
-# 
+    
+    output$sook_map <- renderLeaflet({
+      
+      factpal <- colorFactor(topo.colors(5), all_location$sook)
+      
+      leaflet(all_location) %>%
+        addTiles() %>%
+        addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+                    fillColor = ~ factpal(sook)) %>%
+        addLegend(pal = factpal, values = ~ sook, opacity = 1.0)
+      
+    })
+
     output$hundkmodel <- renderPlot({
         
         # posterior <-
@@ -328,18 +363,35 @@ server <- function(input, output, session) {
         #itself in the below code. All that is needed to graph are the values 
         #from the posterior output, which can be done in the gather.rmd. 
         
-        tibble(NA_Pct=1:100, Intercept = -2.99636) %>%
-            mutate(Probability = exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 10) + (.00001 * 10))/
-                       (1 + exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 10) + (.00001 * 10)))) %>% 
-            ggplot(aes(NA_Pct, Probability)) + 
-            geom_line() +
-            theme_classic() +
+        tibble(NA_Pct = 1:100, Intercept = -2.75621) %>% 
+            mutate(Probability = 
+                 
+                 exp(Intercept + (NA_Pct * -2.65835) + (.00003 * 10) + (.00005 * 10) + (.00006 * 7637))/
+                 
+                 (1 + exp(Intercept + (NA_Pct * -2.65835) + (.00003 * 10) + (.00005 * 10) + (.00006 * 7637)))) %>% 
+        
+            ggplot(aes(NA_Pct, Probability)) +
+            geom_line() + 
+            theme_classic() + 
             scale_y_continuous(labels = scales::percent) +
             xlim(0,10) +
             labs(title = "Predicted Probability of Special Olympic Unified Champion
                  School (UCS) Program Status",
                  x = "Percentage of Native Americans Among students",
                  y = "Probability of Special Olympic UCS") 
+      
+        # tibble(NA_Pct=1:100, Intercept = -2.99636) %>%
+        #     mutate(Probability = exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 10) + (.00001 * 10))/
+        #                (1 + exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 10) + (.00001 * 10)))) %>% 
+        #     ggplot(aes(NA_Pct, Probability)) + 
+        #     geom_line() +
+        #     theme_classic() +
+        #     scale_y_continuous(labels = scales::percent) +
+        #     xlim(0,10) +
+        #     labs(title = "Predicted Probability of Special Olympic Unified Champion
+        #          School (UCS) Program Status",
+        #          x = "Percentage of Native Americans Among students",
+        #          y = "Probability of Special Olympic UCS") 
         
             })
 #     output$table <- renderTable({table})
@@ -349,8 +401,8 @@ server <- function(input, output, session) {
     output$medianmodel <- renderPlot({
         
         tibble(NA_Pct=1:100, Intercept = -2.99636) %>%
-            mutate(Probability = exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 2.3985) + (.00001 * 4.7344))/
-                       (1 + exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 2.3985) + (.00001 * 4.7344)))) %>% 
+            mutate(Probability = exp(Intercept + (NA_Pct * -2.65835) + (.00003 * 2.3985) + (.00005 * 4.7344) + (.00006 * 7637))/
+                       (1 + exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 2.3985) + (.00001 * 4.7344) + (.00006 * 7637)))) %>% 
             ggplot(aes(NA_Pct, Probability)) + 
             geom_line() +
             theme_classic() +
@@ -366,6 +418,28 @@ server <- function(input, output, session) {
         
     })
 
+    output$whitemodel <- renderPlot({
+      
+      tibble(W_Pct = 1:100, Intercept = -3.38573) %>% 
+        mutate(Probability = 
+                 
+                 exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637))/
+                 
+                 (1 + exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637)))) %>% 
+        
+        ggplot(aes(W_Pct, Probability)) +
+        geom_line() + 
+        theme_classic() + 
+        
+        scale_y_continuous(limits = c(0, .15),
+          labels = scales::percent) +
+        
+            xlim(0,10) +
+        labs(title = "Predicted Probability of Special Olympic Unified Champion
+                 School (UCS) Program Status",
+             x = "White Student Percentage",
+             y = "Probability of Special Olympic UCS") 
+    })
 }
 
 

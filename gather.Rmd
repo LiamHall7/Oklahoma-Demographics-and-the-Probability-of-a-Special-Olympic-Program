@@ -253,52 +253,63 @@ okla_schools <- read_excel("raw_data/oklahoma_schools/OnlineDirectorySiteList.xl
 new_nhgis_data <- read_csv("raw_data/new_nhgis_data/nhgis0002_ds239_20185_2018_sd_uni.csv") %>% 
   filter(STATE == "Oklahoma")
 
-nhgis_sec <- read_csv("raw_data/all_nhgis_schools/nhgis0004_csv/nhgis0004_ds239_20185_2018_sd_sec.csv") %>% 
+nhgis_sec <- read_csv("raw_data/nhgis_w_hispanic/nhgis0005_ds239_20185_2018_sd_sec.csv") %>% 
   filter(STATE == "Oklahoma") %>% 
   select_if( ~ sum(!is.na(.)) > 0)
 
-nhgis_elm <- read_csv("raw_data/all_nhgis_schools/nhgis0004_csv/nhgis0004_ds239_20185_2018_sd_elm.csv") %>% 
+nhgis_elm <- read_csv("raw_data/nhgis_w_hispanic/nhgis0005_ds239_20185_2018_sd_elm.csv") %>% 
   filter(STATE == "Oklahoma") %>% 
   select_if( ~ sum(!is.na(.)) > 0)
 
-nhgis_unif <- read_csv("raw_data/all_nhgis_schools/nhgis0004_csv/nhgis0004_ds239_20185_2018_sd_uni.csv") %>% 
+nhgis_unif <- read_csv("raw_data/nhgis_w_hispanic/nhgis0005_ds239_20185_2018_sd_uni.csv") %>% 
   filter(STATE == "Oklahoma") %>% 
   select_if( ~ sum(!is.na(.)) > 0)
+
+#these read ins will bring up the warning about column specification, but those
+#are only necessary to add to the code if changing between the type of string
+#(i.e. changing from logical to character or double, etc.). Otherwise, not
+#necessary to add.
 ```
 ```{r location_files}
 
-elm_location <- sf::st_read(dsn = "raw_data/all_nhgis_schools/nhgis0004_shape/nhgis0004_shapefile_tl2018_us_sd_elm_2018",
+elm_location <- sf::st_read(dsn = "raw_data/nhgis_w_hispanic/Shape/nhgis0006_shapefile_tl2018_us_sd_elm_2018",
                          layer = "US_sd_elm_2018")
 
 elm_location <- sf::st_transform(elm_location,  crs="+init=epsg:4326")
 
 
-unif_location <- sf::st_read(dsn = "raw_data/all_nhgis_schools/nhgis0004_shape/nhgis0004_shapefile_tl2018_us_sd_uni_2018",
+unif_location <- sf::st_read(dsn = "raw_data/nhgis_w_hispanic/Shape/nhgis0006_shapefile_tl2018_us_sd_uni_2018",
                          layer = "US_sd_uni_2018")
 
 unif_location <- sf::st_transform(unif_location,  crs="+init=epsg:4326")
 
-# *Select New York observations only using NHGISST variable
-# NHGISST should be consistent between census years, but you might need to double-check this
-# if you try 1960, 1970.
-# *The NHGISST code is 360 for New York because New York's FIPS code is 360. Google
-# New York FIPS code for more information about the FIPS system.
-# *Need to have spdplyr package loaded to use tidyverse commands on
-# SpatialPolygonsDataFrame aka `filter' and 'mutate'
-# *Join the data1950 data with the MedianHHIncome variable by 'GISJOIN'
-# so that the tract lines and income data are in one object
-# *Subset to Manhattan county, which has FIPS code 061
-# *Can see other NY county fips codes at https://simple.wikipedia.org/wiki/List_of_counties_in_New_York
+
+#always use that same crs argument.
+
+# *Select New York observations only using NHGISST variable NHGISST should be
+# consistent between census years, but you might need to double-check this if
+# you try 1960, 1970. *The NHGISST code is 360 for New York because New York's
+# FIPS code is 360. Google New York FIPS code for more information about the
+# FIPS system. *Need to have spdplyr package loaded to use tidyverse commands on
+# SpatialPolygonsDataFrame aka `filter' and 'mutate' *Join the data1950 data
+# with the MedianHHIncome variable by 'GISJOIN' so that the tract lines and
+# income data are in one object *Subset to Manhattan county, which has FIPS code
+# 061 *Can see other NY county fips codes at
+# https://simple.wikipedia.org/wiki/List_of_counties_in_New_York
 
 ```
 
 ```{r table_names}
 #school_uni dataset is taken from ACS data from 2014-2018
 
+#use the codebook to find the meanings of the different variables like AJWNE001,
+#etc. Also the same variables can have multiple different names.
+
 school_sec <- nhgis_sec %>% 
   rename(total_pop = AJWNE001,
          white = AJWNE002,
          black = AJWNE003,
+         hispanic = AJWVE012,
          native_amer = AJWNE004,
          asian = AJWNE005,
          pac_islander = AJWNE006,
@@ -307,7 +318,7 @@ school_sec <- nhgis_sec %>%
   rename(median_house_income = AJZAE001,
          capita_income = AJ0EE001,
          sd = SDSEC) %>% 
-  select(total_pop, white, black, native_amer, asian,
+  select(total_pop, white, black, hispanic, native_amer, asian,
   pac_islander, other, two_or_more, median_house_income, capita_income,
   GISJOIN, sd) %>% 
   mutate(type = 2)
@@ -318,6 +329,7 @@ school_unif <- nhgis_unif %>%
     rename(total_pop = AJWNE001,
          white = AJWNE002,
          black = AJWNE003,
+         hispanic = AJWVE012,
          native_amer = AJWNE004,
          asian = AJWNE005,
          pac_islander = AJWNE006,
@@ -326,18 +338,19 @@ school_unif <- nhgis_unif %>%
   rename(median_house_income = AJZAE001,
          capita_income = AJ0EE001,
          sd = SDUNI) %>% 
-  select(total_pop, white, black, native_amer, asian,
+  select(total_pop, white, black, hispanic, native_amer, asian,
   pac_islander, other, two_or_more, median_house_income, capita_income, 
   GISJOIN, sd) %>% 
   mutate(type = 0) 
   # merge(unif_location)
 
-school_unif[416, 12] = "Remainder of Oklahoma (unif)"
+school_unif[416, 13] = "Remainder of Oklahoma (unif)"
 
 school_elm <- nhgis_elm %>% 
   rename(total_pop = AJWNE001,
          white = AJWNE002,
          black = AJWNE003,
+         hispanic = AJWVE012,
          native_amer = AJWNE004,
          asian = AJWNE005,
          pac_islander = AJWNE006,
@@ -346,17 +359,19 @@ school_elm <- nhgis_elm %>%
   rename(median_house_income = AJZAE001,
          capita_income = AJ0EE001,
          sd = SDELM) %>% 
-  select(total_pop, white, black, native_amer, asian,
+  select(total_pop, white, black, hispanic, native_amer, asian,
   pac_islander, other, two_or_more, median_house_income, capita_income,
   GISJOIN, sd) %>% 
   mutate(type = 1) 
   # merge(elm_location)
 
-school_elm[99, 12] = "Remainder of Oklahoma (elm)"
+school_elm[99, 13] = "Remainder of Oklahoma (elm)"
 
 #school_uni$sd_uni == substr(school_uni$NAME_E,1,nchar(school_uni$NAME_E)-10)
 
-#used above line to make sure that the NAME_E column is the same as SDUNI in the original dataset. They are the same, except of the ", Oklahoma" at the end of the
+#used above line to make sure that the NAME_E column is the same as SDUNI in the
+#original dataset. They are the same, except of the ", Oklahoma" at the end of
+#the
 ```
 
 ```{r data_join}
@@ -367,16 +382,18 @@ all_school <- all_school %>%
          sd_clean = str_replace(sd_clean, pattern = " Unified Schools", replacement = ""),
          sd_clean = str_replace(sd_clean, pattern = " Schools", replacement = ""))
 
+#the above line makes sure that all the school district names are in the same 
+#format, so that we can easily compare.
+
 # all_location <- bind_rows(elm_location, unif_location)
-
-# by = c("total_pop", "white", "black", "native_amer", "asian", "pac_islander", "other", "two_or_more", "median_house_income", "capita_income", "GISJOIN", "type", "sd")) 
-
 
 sook_schools <- read_excel("raw_data/year_12_sook_school_list.xlsx")
 
 sook_schools[16, 4] = "Midwest City-Del City"
-all_school[120, 14] = "Arapaho-Butler"
-all_school[185, 14] = "Choctaw-Nicoma Park"
+all_school[120, 15] = "Arapaho-Butler"
+all_school[185, 15] = "Choctaw-Nicoma Park"
+
+#had to manually edit a few aberrant names to standardize the sd_clean column
 
 all_school <- all_school %>% 
   mutate(sook = if_else(all_school$sd_clean %in% sook_schools$District, 1, 0)) %>% 
@@ -384,6 +401,7 @@ all_school <- all_school %>%
   mutate(log_na = log(native_amer + 1)) %>% 
   mutate(na_percent = (native_amer/total_pop),
          white_percent = (white/total_pop),
+         hisp_percent = (hispanic/total_pop),
          black_percent = (black/total_pop), 
          asian_percent = (asian/total_pop),
          pi_percent = (pac_islander/total_pop), 
@@ -391,6 +409,9 @@ all_school <- all_school %>%
          mixed_race_percent = (two_or_more/total_pop)) 
 
 saveRDS(all_school, file = "school.RDS")
+
+#Saving it allows us to bring it up in the app.R without copying and the pasting
+#the code into the app.R file. Just cleaner to save and upload in the shiny.
 
 ```
 
@@ -405,18 +426,25 @@ unif_location <-
   unif_location %>% 
   merge(school_unif, "GISJOIN")
 
+#GISJOIN merge allows us to add the locations to the school districts.
+
 all_location <- bind_rows(elm_location, unif_location)
 
 # Set projection of tracts dataset to `projection` required by leaflet
-# 
 
 all_location <- all_location %>% 
   mutate(log_na = log(native_amer + 1)) %>% 
   mutate(na_percent = (native_amer/total_pop),
          white_percent = (white/total_pop),
-         black_percent = (black/total_pop), 
+         black_percent = (black/total_pop),
+         hisp_percent = (hispanic/total_pop),
          asian_percent = (asian/total_pop),
          pi_percent = (pac_islander/total_pop), 
+         
+         #all these percentages are calculated using the data available. Check
+         #to make sure that NHGIS doesn't also have percentages that could be
+         #helpful
+         
          other_race_percent = (other/total_pop), 
          mixed_race_percent = (two_or_more/total_pop)) %>% 
   mutate(sd_clean = str_replace(sd, pattern = " Public School\\w*", replacement = ""),
@@ -431,26 +459,37 @@ all_location <-sf::st_transform(all_location, crs="+init=epsg:4326")
 
 saveRDS(all_location, file = "all.RDS")
 
+# =======
+
+
 pal <- colorNumeric("viridis", NULL)
 
-factpal <- colorFactor(topo.colors(5), all_location$sook)
-#  Plot the data
-
-
 leaflet(all_location) %>%
-  addTiles() %>%
-  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
-              fillColor = ~ factpal(sook)) %>%
-  addLegend(pal = factpal, values = ~ sook, opacity = 1.0)
+            addTiles() %>%
+            addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+                        fillColor = ~ pal(hispanic)) %>%
+            addLegend(pal = pal, values = ~ hispanic * 1, title = "w", opacity = 1.0)
+# 
+# factpal <- colorFactor(topo.colors(5), all_location$sook)
 
-#factpal for binary or integer. pal for everything else.
-  
-leaflet(all_location) %>%
-  addTiles() %>%
-  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
-              fillColor = ~ pal(sook)) %>%
-  addLegend(pal = pal, values = ~ sook, opacity = 1.0)
+# leaflet(all_location) %>%
+#   addTiles() %>%
+#   addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+#               fillColor = ~ factpal(sook)) %>%
+#   addLegend(pal = factpal, values = ~ sook, opacity = 1.0)
+# 
+# #factpal for binary or integer. pal for everything else. For something like sook
+# #which is binary, always use factpal as the argument.
+#   
+# 
+# leaflet(all_location) %>%
+#   addTiles() %>%
+#   addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+#               fillColor = ~ factpal(sook)) %>%
+#   addLegend(pal = factpal, values = ~ sook, opacity = 1.0)
+# 
 
+#=======
 
 
 #how to show more gradient in the scale? 
@@ -466,7 +505,7 @@ leaflet(all_location) %>%
 
 posterior <-
   stan_glm(data = all_school,
-           formula = sook ~ median_house_income + capita_income + na_percent,
+           formula = sook ~ median_house_income + capita_income + na_percent + total_pop,
            refresh = 0,
            family = binomial())
 
@@ -477,24 +516,27 @@ saveRDS(posterior, file = "stan.RDS")
 # gtsummary::posterior
 
 
-# logistic regression, theyre log odds coefficients
+# logistic regression, they're log odds coefficients
 
-# gt_summary 
+# gt_summary if you want to show the results in a table.
 
-#write out equation. Interpret the math. Compare groups. Make predictions for community in Oklahoma for lowest income OK town and middle income, etc -- two posteriors.
-# 
-# 
-# equation <- Median_intercept + (median_income * 10) + (capita_income * 10 + (percent_na * median of na_percent))
+# equation <- Median_intercept + (median_income * 10) + (capita_income * 10 +
+# (percent_na * median of na_percent))
 
-# You need to include the income predictors inside the exp function. So the coefficient for median income and per capita income.
+# You need to include the income predictors inside the exp function. So the
+# coefficient for median income and per capita income.
 
-equation <- 2.99636 + (.00001 * 10) + (.00002 * 10) + (na_percent * -4.57314) 
+# equation <- 2.99636 + (.00001 * 10) + (.00002 * 10) + (na_percent * -4.57314) 
 
-x <- tibble(NA_Pct = 1:100, Intercept = -2.99636) %>% 
+x <- tibble(NA_Pct = 1:100, Intercept = -2.75621) %>% 
   mutate(Probability = 
-           exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 10) + (.00001 * 10))/
-  (1 + exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 10) + (.00001 * 10)))) %>% 
-  ggplot(aes(Intercept, Probability)) + geom_line()
+           
+           exp(Intercept + (NA_Pct * -2.65835) + (.00003 * 10) + (.00005 * 10) + (.00006 * )/
+           
+           (1 + exp(Intercept + (NA_Pct * -2.65835) + (.00003 * 10) + (.00005 * 10) + (.00006 * 10)))) %>% 
+  
+  ggplot(aes(NA_Pct, Probability)) +
+  geom_line()
 
 x
 
@@ -502,11 +544,52 @@ x
 
 ```{r}
 
+posterior1 <-
+  stan_glm(data = all_school,
+           formula = sook ~ median_house_income + capita_income + black_percent + total_pop,
+           refresh = 0,
+           family = binomial())
 
-```
+print(posterior1, digits = 5)
+
+# tibble(W_Pct = 1:100, Intercept = -3.38573) %>% 
+#             mutate(Probability = 
+#                  
+#                  exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006))/
+#                  
+#                  (1 + exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006)))) %>% 
+#         
+#             ggplot(aes(W_Pct, Probability)) +
+#             geom_line() + 
+#             theme_classic() + 
+#             scale_y_continuous(labels = scales::percent) +
+#             xlim(0,10) +
+#             labs(title = "Predicted Probability of Special Olympic Unified Champion
+#                  School (UCS) Program Status",
+#                  x = "Percentage of Native Americans Among students",
+#                  y = "Probability of Special Olympic UCS") 
 
 
-```{r}
+tibble(W_Pct = 1:100, Intercept = -3.54761) %>% 
+        mutate(Probability = 
+                 
+                 exp(Intercept + (W_Pct * 2.75910) + (.00003 * 10) + (-.00004 * 10) + (.00006 * 7637))/
+                 
+                 (1 + exp(Intercept + (W_Pct * 2.75910) + (.00003 * 10) + (-.00004 * 10) + (.00006 * 7637)))) %>% 
+        
+        ggplot(aes(W_Pct, Probability)) +
+        geom_line() + 
+        theme_classic() + 
+        
+        scale_y_continuous(
+          labels = scales::percent) +
+        
+            xlim(0,10) +
+        labs(title = "Predicted Probability of Special Olympic Unified Champion
+                 School (UCS) Program Status",
+             x = "Black Student Percentage",
+             y = "Probability of Special Olympic UCS")
+
 # sec_location <- sf::st_read(dsn = "raw_data/all_nhgis_schools/nhgis0004_shape/nhgis0004_shapefile_tl2018_us_sd_sec_2018",
 #                          layer = "US_sd_sec_2018")
 
@@ -543,9 +626,9 @@ x
 #   addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
 #               fillColor = ~pal(median_house_income)) %>%
 #   addLegend(pal = pal, values = ~median_house_income, opacity = 1.0)
-# 
+# # 
 # ```
-# 
+
 # ```{r}
 # locations_unif <- sf::st_read(dsn = "raw_data/new_nhgis_data/nhgis0003_shape",
 #                          layer = "US_sd_uni_2018")
