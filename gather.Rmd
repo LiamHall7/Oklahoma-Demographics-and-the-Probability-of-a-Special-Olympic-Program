@@ -531,9 +531,9 @@ saveRDS(posterior, file = "stan.RDS")
 x <- tibble(NA_Pct = 1:100, Intercept = -2.75621) %>% 
   mutate(Probability = 
            
-           exp(Intercept + (NA_Pct * -2.65835) + (.00003 * 10) + (.00005 * 10) + (.00006 * )/
+           exp(Intercept + (NA_Pct * -2.65835) + (.00003 * 10) + (.00005 * 10) + (.00006 * 10000)/
            
-           (1 + exp(Intercept + (NA_Pct * -2.65835) + (.00003 * 10) + (.00005 * 10) + (.00006 * 10)))) %>% 
+           (1 + exp(Intercept + (NA_Pct * -2.65835) + (.00003 * 10) + (.00005 * 10) + (.00006 * 10))))) %>% 
   
   ggplot(aes(NA_Pct, Probability)) +
   geom_line()
@@ -549,6 +549,7 @@ posterior1 <-
            formula = sook ~ median_house_income + capita_income + black_percent + total_pop,
            refresh = 0,
            family = binomial())
+
 
 print(posterior1, digits = 5)
 
@@ -569,26 +570,26 @@ print(posterior1, digits = 5)
 #                  x = "Percentage of Native Americans Among students",
 #                  y = "Probability of Special Olympic UCS") 
 
-
-tibble(W_Pct = 1:100, Intercept = -3.54761) %>% 
-        mutate(Probability = 
-                 
-                 exp(Intercept + (W_Pct * 2.75910) + (.00003 * 10) + (-.00004 * 10) + (.00006 * 7637))/
-                 
-                 (1 + exp(Intercept + (W_Pct * 2.75910) + (.00003 * 10) + (-.00004 * 10) + (.00006 * 7637)))) %>% 
-        
-        ggplot(aes(W_Pct, Probability)) +
-        geom_line() + 
-        theme_classic() + 
-        
-        scale_y_continuous(
-          labels = scales::percent) +
-        
-            xlim(0,10) +
-        labs(title = "Predicted Probability of Special Olympic Unified Champion
-                 School (UCS) Program Status",
-             x = "Black Student Percentage",
-             y = "Probability of Special Olympic UCS")
+# 
+# tibble(W_Pct = 1:100, Intercept = -3.54761) %>% 
+#         mutate(Probability = 
+#                  
+#                  exp(Intercept + (W_Pct * 2.75910) + (.00003 * 10) + (-.00004 * 10) + (.00006 * 7637))/
+#                  
+#                  (1 + exp(Intercept + (W_Pct * 2.75910) + (.00003 * 10) + (-.00004 * 10) + (.00006 * 7637)))) %>% 
+#         
+#         ggplot(aes(W_Pct, Probability)) +
+#         geom_line() + 
+#         theme_classic() + 
+#         
+#         scale_y_continuous(
+#           labels = scales::percent) +
+#         
+#             xlim(0,10) +
+#         labs(title = "Predicted Probability of Special Olympic Unified Champion
+#                  School (UCS) Program Status",
+#              x = "Black Student Percentage",
+#              y = "Probability of Special Olympic UCS")
 
 # sec_location <- sf::st_read(dsn = "raw_data/all_nhgis_schools/nhgis0004_shape/nhgis0004_shapefile_tl2018_us_sd_sec_2018",
 #                          layer = "US_sd_sec_2018")

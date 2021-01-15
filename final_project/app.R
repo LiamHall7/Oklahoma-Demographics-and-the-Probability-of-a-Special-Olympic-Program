@@ -80,8 +80,9 @@ ui <-   navbarPage("Oklahoma School District Demographics",
                 leafletOutput("econ_map", width = "100%"))))),
   
     tabPanel("Special Olympics Schools",
+             fluidPage(
+               h3("Special Olympics UCS Presence in Oklahoma"),
              
-             mainPanel(
                leafletOutput("sook_map", width = "100%"))),  
     
 
