@@ -223,6 +223,10 @@ library(tools)
 
 
 ```{r}
+# FOR REPLICATING THE PROJECT TO OTHER STATES, JUST EDIT THE UPPER SECTION TO
+# INCLUDE OTHER STATES.
+
+
 #spec(nhgis_data_acs)
 #above code will give us the column specifications (i.e. character, logical, 
 #etc.)

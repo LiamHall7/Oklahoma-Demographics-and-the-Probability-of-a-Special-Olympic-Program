@@ -5,12 +5,10 @@ library(readr)
 library(ggforce)
 library(ggplot2)
 library(tidyverse)
-library(ggforce)
 library(dplyr)
 library(leaflet)
 library(shinythemes)
 library(dplyr)
-library(ipumsr)
 library(sf)
 library(readxl)
 library(tools)
@@ -23,7 +21,7 @@ all_school <- read_rds("school.RDS")
 
 ui <-   navbarPage("Oklahoma School District Demographics",
                    theme = shinytheme("cosmo"),
-                   windowTitle = "Oklahoma School Demographics", 
+                   windowTitle = "Oklahoma School Demographics",
                    
                    #above section names the app, sets the theme of the app
                    #design, and names the tab on the browser.
@@ -34,7 +32,7 @@ ui <-   navbarPage("Oklahoma School District Demographics",
              
     tabPanel("Racial and Ethnic Groups",
              
-             h3(strong("Welcome to my Final Project!")), 
+             h3(strong("Mapping of Oklahoma Demographics")), 
              p("Below is an interactive plot that will map different factors
                and their respective densities throughout the state of
                Oklahoma."),
@@ -66,7 +64,7 @@ ui <-   navbarPage("Oklahoma School District Demographics",
              
              #This section is the same as above.
              
-             h3(strong("Welcome to my Final Project!")), 
+             h3(strong("Mapping of Oklahoma Demographics")), 
              p("Below is an interactive plot that will map different factors
                and their respective densities throughout the state of
                Oklahoma."),
@@ -80,15 +78,14 @@ ui <-   navbarPage("Oklahoma School District Demographics",
                 leafletOutput("econ_map", width = "100%"))))),
   
     tabPanel("Special Olympics Schools",
-             fluidPage(
                h3("Special Olympics UCS Presence in Oklahoma"),
              
-               leafletOutput("sook_map", width = "100%"))),  
+               leafletOutput("sook_map", width = "100%")),  
     
 
-    tabPanel("Model",
-             fluidPage(
-                 h3("Welcome to my Model page!"),
+      tabPanel("Models by Income",
+                 h3("Predicting Probabilities of a UCS Program within a School
+                    District"),
                  
                  #the p() argument is normal text. The different h() arguments
                  #create titles or "headlines" of a certain size, so you can
@@ -151,15 +148,47 @@ ui <-   navbarPage("Oklahoma School District Demographics",
                     
                      #the br() adds a break between lines or plots, etc.
                      
-                     plotOutput("medianmodel"),
-                     br(), 
+                     plotOutput("medianmodel"))),
+                    
+      tabPanel("Models by Race",
+                     h3("Predicted Probability of UCS Program by Race"),
+                     p("My model predicts the likelihood 
+                 that a given public school in the state of Oklahoma has a 
+                 Special Olympics Unified Champion (UCS) School Program based on the
+                 the median household income and per capita income of the
+                 school's district as well as the percentage of Native American
+                 students in that school.",
+                       
+                       p("All of the below graphs reflect the likelihood of a UCS
+                       program within a given school district by the percentage 
+                       of a given racial group within the area. All graphs are
+                       predicted probabilities based on median household and 
+                       per capita income around the state."),
+                     br(),
                      
-                     plotOutput("whitemodel")
-             ))),
+                     h4("Native American"),
+                     plotOutput("medianmodel"),
+                     br(),
+
+                     # h4("White"),
+                     # plotOutput("whitemodel"),
+                     # br(),
+                     # 
+                     # h4("Hispanic"),
+                     # plotOutput("hispmodel"),
+                     # br(),
+                     # 
+                     # h4("Black"),
+                     # plotOutput("blackmodel"),
+                     # br(),
+                     # 
+                     # h4("Asian"),
+                     # plotOutput("asianmodel"),
+                    
+             )),
     
     tabPanel("About",
              
-             fluidPage(
                  h3("Project Background and Motivations"),
                  p("Hello lost traveler! Welcome to my final project! I looked
              at how racial demographics, particularly Native American
@@ -197,15 +226,12 @@ ui <-   navbarPage("Oklahoma School District Demographics",
              This is a link to my", 
               
               
-              a("repo.", href = "https://github.com/LiamHall7/Oklahoma-Demographics-and-the-Probability-of-a-Special-Olympic-Program"))),
-
-    ))
+              a("repo.", href = "https://github.com/LiamHall7/Oklahoma-Demographics-and-the-Probability-of-a-Special-Olympic-Program"))))
     
     
     #you can read in different leaflets to show different outputs, or use the
 #strategy I used below to substitute inputs.
 
-# Define server logic required to draw a histogram
 server <- function(input, output, session) {
     
     output$na_map <- renderLeaflet({
@@ -419,7 +445,93 @@ server <- function(input, output, session) {
         
     })
 
+    output$nativemodel <- renderPlot({
+      
+      tibble(NA_Pct=1:100, Intercept = -2.99636) %>%
+        mutate(Probability = exp(Intercept + (NA_Pct * -2.65835) + (.00003 * 2.3985) + (.00005 * 4.7344) + (.00006 * 7637))/
+                 (1 + exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 2.3985) + (.00001 * 4.7344) + (.00006 * 7637)))) %>% 
+        ggplot(aes(NA_Pct, Probability)) + 
+        geom_line() +
+        theme_classic() +
+        scale_y_continuous(labels = scales::percent) +
+        xlim(0,10) +
+        labs(title = "Predicted Probability of Special Olympic Unified Champion
+                 School (UCS) Program Status",
+             x = "Percentage of Native Americans Among students",
+             y = "Probability of Special Olympic UCS") 
+    })
+    
+    
     output$whitemodel <- renderPlot({
+      
+      tibble(W_Pct = 1:100, Intercept = -3.38573) %>% 
+        mutate(Probability = 
+                 
+                 exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637))/
+                 
+                 (1 + exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637)))) %>% 
+        
+        ggplot(aes(W_Pct, Probability)) +
+        geom_line() + 
+        theme_classic() + 
+        
+        scale_y_continuous(limits = c(0, .15),
+                           labels = scales::percent) +
+        
+        xlim(0,10) +
+        labs(title = "Predicted Probability of Special Olympic Unified Champion
+                 School (UCS) Program Status",
+             x = "White Student Percentage",
+             y = "Probability of Special Olympic UCS") 
+    })
+    
+    output$blackmodel <- renderPlot({
+      
+      tibble(W_Pct = 1:100, Intercept = -3.38573) %>% 
+        mutate(Probability = 
+                 
+                 exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637))/
+                 
+                 (1 + exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637)))) %>% 
+        
+        ggplot(aes(W_Pct, Probability)) +
+        geom_line() + 
+        theme_classic() + 
+        
+        scale_y_continuous(limits = c(0, .15),
+                           labels = scales::percent) +
+        
+        xlim(0,10) +
+        labs(title = "Predicted Probability of Special Olympic Unified Champion
+                 School (UCS) Program Status",
+             x = "White Student Percentage",
+             y = "Probability of Special Olympic UCS") 
+    })
+    
+    output$hispmodel <- renderPlot({
+      
+      tibble(W_Pct = 1:100, Intercept = -3.38573) %>% 
+        mutate(Probability = 
+                 
+                 exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637))/
+                 
+                 (1 + exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637)))) %>% 
+        
+        ggplot(aes(W_Pct, Probability)) +
+        geom_line() + 
+        theme_classic() + 
+        
+        scale_y_continuous(limits = c(0, .15),
+                           labels = scales::percent) +
+        
+        xlim(0,10) +
+        labs(title = "Predicted Probability of Special Olympic Unified Champion
+                 School (UCS) Program Status",
+             x = "White Student Percentage",
+             y = "Probability of Special Olympic UCS") 
+    })
+    
+    output$asianmodel <- renderPlot({
       
       tibble(W_Pct = 1:100, Intercept = -3.38573) %>% 
         mutate(Probability = 
@@ -441,7 +553,8 @@ server <- function(input, output, session) {
              x = "White Student Percentage",
              y = "Probability of Special Olympic UCS") 
     })
-}
+
+    }
 
 
 shinyApp(ui = ui, server = server)
