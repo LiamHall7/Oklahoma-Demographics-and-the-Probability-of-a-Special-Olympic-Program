@@ -14,6 +14,7 @@ library(leaflet)
 library(sf)
 library(rstanarm)
 library(ggplot2)
+library(gtsummary)
 library(readxl)
 library(tools)
 ```
@@ -250,9 +251,10 @@ library(tools)
 ```
 
 ```{r read_ins}
-okla_district <- read_excel("raw_data/oklahoma_schools/OnlineDirectoryDistrictList.xls")
-okla_schools <- read_excel("raw_data/oklahoma_schools/OnlineDirectorySiteList.xls")
 
+okla_district <- read_excel("raw_data/oklahoma_schools/OnlineDirectoryDistrictList.xls")
+
+okla_schools <- read_excel("raw_data/oklahoma_schools/OnlineDirectorySiteList.xls")
 
 new_nhgis_data <- read_csv("raw_data/new_nhgis_data/nhgis0002_ds239_20185_2018_sd_uni.csv") %>% 
   filter(STATE == "Oklahoma")
@@ -348,6 +350,8 @@ school_unif <- nhgis_unif %>%
   mutate(type = 0) 
   # merge(unif_location)
 
+#sd variable stands for school district
+
 school_unif[416, 13] = "Remainder of Oklahoma (unif)"
 
 school_elm <- nhgis_elm %>% 
@@ -381,7 +385,7 @@ school_elm[99, 13] = "Remainder of Oklahoma (elm)"
 ```{r data_join}
 all_school <- bind_rows(school_elm, school_unif)
 
-all_school <- all_school %>% 
+all_school_clean <- all_school %>% 
   mutate(sd_clean = str_replace(sd, pattern = " Public School\\w*", replacement = ""),
          sd_clean = str_replace(sd_clean, pattern = " Unified Schools", replacement = ""),
          sd_clean = str_replace(sd_clean, pattern = " Schools", replacement = ""))
@@ -394,13 +398,13 @@ all_school <- all_school %>%
 sook_schools <- read_excel("raw_data/year_12_sook_school_list.xlsx")
 
 sook_schools[16, 4] = "Midwest City-Del City"
-all_school[120, 15] = "Arapaho-Butler"
-all_school[185, 15] = "Choctaw-Nicoma Park"
+all_school_clean[120, 15] = "Arapaho-Butler"
+all_school_clean[185, 15] = "Choctaw-Nicoma Park"
 
 #had to manually edit a few aberrant names to standardize the sd_clean column
 
-all_school <- all_school %>% 
-  mutate(sook = if_else(all_school$sd_clean %in% sook_schools$District, 1, 0)) %>% 
+school_data <- all_school_clean %>% 
+  mutate(sook = if_else(all_school_clean$sd_clean %in% sook_schools$District, 1, 0)) %>% 
   filter(!(sd %in% c("Remainder of Oklahoma (elm)", "Remainder of Oklahoma (unif)"))) %>% 
   mutate(log_na = log(native_amer + 1)) %>% 
   mutate(na_percent = (native_amer/total_pop),
@@ -410,9 +414,9 @@ all_school <- all_school %>%
          asian_percent = (asian/total_pop),
          pi_percent = (pac_islander/total_pop), 
          other_race_percent = (other/total_pop), 
-         mixed_race_percent = (two_or_more/total_pop)) 
+         mixed_race_percent = (two_or_more/total_pop))
 
-saveRDS(all_school, file = "school.RDS")
+saveRDS(school_data, file = "school.RDS")
 
 #Saving it allows us to bring it up in the app.R without copying and the pasting
 #the code into the app.R file. Just cleaner to save and upload in the shiny.
@@ -422,21 +426,19 @@ saveRDS(all_school, file = "school.RDS")
 
 
 ```{r}
-elm_location <-
-  elm_location %>%
+elm_school_loc <- elm_location %>%
   merge(school_elm, "GISJOIN") 
 
-unif_location <- 
-  unif_location %>% 
+unif_school_loc <- unif_location %>% 
   merge(school_unif, "GISJOIN")
 
 #GISJOIN merge allows us to add the locations to the school districts.
 
-all_location <- bind_rows(elm_location, unif_location)
+all_location <- bind_rows(elm_school_loc, unif_school_loc)
 
 # Set projection of tracts dataset to `projection` required by leaflet
 
-all_location <- all_location %>% 
+all_location_clean <- all_location %>% 
   mutate(log_na = log(native_amer + 1)) %>% 
   mutate(na_percent = (native_amer/total_pop),
          white_percent = (white/total_pop),
@@ -457,21 +459,21 @@ all_location <- all_location %>%
   mutate(median_house_income = median_house_income/10000, 
          capita_income = capita_income/10000) %>% 
   filter(!(sd %in% c("Remainder of Oklahoma (elm)", "Remainder of Oklahoma (unif)"))) %>% 
-  mutate(sook = if_else(all_school$sd_clean %in% sook_schools$District, "1", "0"))
+  mutate(sook = if_else(school_data$sd_clean %in% sook_schools$District, "1", "0"))
 
-all_location <-sf::st_transform(all_location, crs="+init=epsg:4326")
+location_data <-sf::st_transform(all_location_clean, crs="+init=epsg:4326")
 
-saveRDS(all_location, file = "all.RDS")
+saveRDS(all_location_clean, file = "all.RDS")
 
 # =======
 
 
 pal <- colorNumeric("viridis", NULL)
 
-leaflet(all_location) %>%
+leaflet(all_location_clean) %>%
             addTiles() %>%
             addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
-                        fillColor = ~ pal(hispanic)) %>%
+                        fillColor = ~ pal(asian)) %>%
             addLegend(pal = pal, values = ~ hispanic * 1, title = "w", opacity = 1.0)
 # 
 # factpal <- colorFactor(topo.colors(5), all_location$sook)
@@ -507,18 +509,66 @@ leaflet(all_location) %>%
 
 ```{r model}
 
-posterior <-
-  stan_glm(data = all_school,
-           formula = sook ~ median_house_income + capita_income + na_percent + total_pop,
-           refresh = 0,
-           family = binomial())
+set.seed(6)
 
-print(posterior, digits = 5)
+econ_fit <-  stan_glm(data = school_data,
+                    formula = sook ~ median_house_income + capita_income + na_percent,
+                    refresh = 0,
+                    family = binomial())
+
+na_fit <-  stan_glm(data = school_data,
+                    formula = sook ~ median_house_income + capita_income + na_percent + total_pop,
+                    refresh = 0,
+                    family = binomial())
+
+print(na_fit, digits = 5)
 
 
-saveRDS(posterior, file = "stan.RDS")
-# gtsummary::posterior
+white_fit <-  stan_glm(data = school_data,
+                    formula = sook ~ median_house_income + capita_income + white_percent + total_pop,
+                    refresh = 0,
+                    family = binomial())
 
+print(white_fit, digits = 5)
+
+
+black_fit <-  stan_glm(data = school_data,
+                    formula = sook ~ median_house_income + capita_income + black_percent + total_pop,
+                    refresh = 0,
+                    family = binomial())
+
+print(black_fit, digits = 5)
+
+
+asian_fit <-  stan_glm(data = school_data,
+                    formula = sook ~ median_house_income + capita_income + asian_percent + total_pop,
+                    refresh = 0,
+                    family = binomial())
+
+print(asian_fit, digits = 5)
+
+
+hispanic_fit <-  stan_glm(data = school_data,
+                    formula = sook ~ median_house_income + capita_income + hisp_percent + total_pop,
+                    refresh = 0,
+                    family = binomial())
+
+print(hispanic_fit, digits = 5)
+
+
+print(econ_fit, digits = 5)
+print(na_fit, digits = 5)
+print(white_fit, digits = 5)
+print(black_fit, digits = 5)
+print(asian_fit, digits = 5)
+print(hispanic_fit, digits = 5)
+
+
+
+
+mean(school_data$native_amer)
+
+mean()# saveRDS(posterior, file = "stan.RDS")
 
 # logistic regression, they're log odds coefficients
 
@@ -543,6 +593,8 @@ x <- tibble(NA_Pct = 1:100, Intercept = -2.75621) %>%
   geom_line()
 
 x
+
+mean(school_data$total_pop)
 
 ```
 

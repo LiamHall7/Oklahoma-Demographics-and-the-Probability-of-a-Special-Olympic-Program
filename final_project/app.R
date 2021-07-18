@@ -7,9 +7,11 @@ library(ggplot2)
 library(tidyverse)
 library(dplyr)
 library(leaflet)
+library(gridExtra)
 library(shinythemes)
 library(dplyr)
 library(sf)
+library(shiny)
 library(readxl)
 library(tools)
 
@@ -32,144 +34,148 @@ ui <-   navbarPage("Oklahoma School District Demographics",
              
     tabPanel("Racial and Ethnic Groups",
              
-             h3(strong("Mapping of Oklahoma Demographics")), 
-             p("Below is an interactive plot that will map different factors
+             
+             h3(strong("Mapping Oklahoma Racial and Ethnic Demographics"), align = "center"), 
+             p("The interactive plot below maps different demographics
                and their respective densities throughout the state of
-               Oklahoma."),
+               Oklahoma.", align = "center"),
              
              #sidebar creates the drop down for different variables.
              
-                  sidebarLayout(
-                    selectInput("group", label = "Group",
-                                choices = c("Total Population",
-                                            "Native American",
-                                            "Native American (Percent)",
-                                            "White",
-                                            "White (Percent)",
-                                            "Black",
-                                            "Black (Percent)",
-                                            "Hispanic",
-                                            "Hispanic (Percent)",
-                                            "Asian",
-                                            "Asian (Percent)",
-                                            "Mixed Race",
-                                            "Mixed Race (Percent)",
-                                            "Pacific Islander",
-                                            "Pacific Islander (Percent)")),
-                    
-                    mainPanel(
+                         sidebarLayout(
+                           sidebarPanel( 
+                                    selectInput("group", label = "Select a Group",
+                                        choices = c("Total Population",
+                                                    "Native American",
+                                                    "Native American (Percent)",
+                                                    "White",
+                                                    "White (Percent)",
+                                                    "Black",
+                                                    "Black (Percent)",
+                                                    "Hispanic",
+                                                    "Hispanic (Percent)",
+                                                    "Asian",
+                                                    "Asian (Percent)",
+                                                    "Mixed Race",
+                                                    "Mixed Race (Percent)",
+                                                    "Pacific Islander",
+                                                    "Pacific Islander (Percent)"))),
+                            
+                            mainPanel(align = "center",
                   leafletOutput("na_map", width = "100%")))),
                  
     tabPanel("Economic Status", 
              
              #This section is the same as above.
              
-             h3(strong("Mapping of Oklahoma Demographics")), 
-             p("Below is an interactive plot that will map different factors
+             h3(strong("Mapping Oklahoma Economic Demographics"), align = "center"), 
+             p("The interactive plot below maps different demographics
                and their respective densities throughout the state of
-               Oklahoma."),
+               Oklahoma.", align = "center"),
              
                   sidebarLayout(
-                    selectInput("econ", label = "Economic",
+                    sidebarPanel(
+                    selectInput("econ", label = "Select an Index",
                                 choices = c("Median Household Income",
-                                            "Per Capita Income")),
+                                            "Per Capita Income"))),
             
-            mainPanel(
+            mainPanel(align = "center",
                 leafletOutput("econ_map", width = "100%"))))),
   
-    tabPanel("Special Olympics Schools",
-               h3("Special Olympics UCS Presence in Oklahoma"),
-             
-               leafletOutput("sook_map", width = "100%")),  
-    
+     tabPanel("Special Olympics Schools", position = "center",
+                h3(strong("Special Olympics UCS Presence in Oklahoma"), align = "center"),
+              
+              
+               
+                  p("The interactive plot below shows the school districts with (and without)
+                     at least one Unified Champion School (UCS) program.", align = "center"),
+              
+#              mainPanel(align = "center",
+                   fluidRow(align = "center",     
+                   
+                leafletOutput("sook_map", width = "90%"))),
+     
 
       tabPanel("Models by Income",
-                 h3("Predicting Probabilities of a UCS Program within a School
-                    District"),
-                 
+                 h2("Predicted Probability of a Unified Champion School (UCS) program by Income", align = "center"),
+               br(),
+
                  #the p() argument is normal text. The different h() arguments
                  #create titles or "headlines" of a certain size, so you can
-                 #have multiple h3() functions. The number isn't for listing the 
-                 #number of headlines, but to determine the size of those 
+                 #have multiple h3() functions. The number isn't for listing the
+                 #number of headlines, but to determine the size of those
                  #headlines.
-                 
-                 p("My model predicts the likelihood 
-                 that a given public school in the state of Oklahoma has a 
-                 Special Olympics Unified Champion (UCS) School Program based on the
-                 the median household income and per capita income of the
-                 school's district as well as the percentage of Native American
-                 students in that school. I used a logistic regression model
-                 because the presence of Special Olympics in the school is a
-                 binary indicator. If you're more interested in how log regressions
-                 work, this",
-                   
-                  #the a() line hyperlinks text. 
-                   
-                  a("site", href = "https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/"),
-                 
-                 "was very helpful."),
-                
-              
-                 p("The two graphs below show two potential
-                 schools. The", 
-                 strong("top plot"),
-                 
-                 #strong() makes the text bold. em() italicizes the text. This 
-                 #is different from R markdown where * around words are used to
-                 #get these effects.
-                 
-                 "predicts the likelihood of UCS in a school
-                 with a median household and per capita income of $100,000. The",
-                 strong("bottom graph"),
-                 "predicts the likelihood of UCS in a school with
-                 a median household income and per capita income equivalent to 
-                 the state median ($47,344 and $23,985, respectively)."),
-                 
+
+                 p("The graphs below show the predicted probability that a given
+                 school district in the state of Oklahoma has a Special Olympics Unified
+                 Champion School (UCS) program, given the district's percentage
+                 of Native American students, at two different income levels.
+                 The graph on the left assumes the school district has an income level
+                 of $100,000, while the graph on the right assumes the district
+                 has an income level equal to the state median. (The median 
+                 household income in Oklahoma is $47,344, and the median per capita
+                 income is $23,985.)", align = "center"),
+
                  #the new p() adds a break between the previous text and the new
                  #text
-                 
-                 p("As you may notice from the y-axis, my model suggests a very
-                   small likelihood that the UCS Program will be in any school
-                   in Oklahoma. Moreover, there is a clear negative
-                   relationship between likelihood of a UCS Program and the 
-                   proportion of Native Americans in that school district, 
-                   regardless of the economic attributes of the school. The
-                   model suggests that the likelihood of a UCS Program in a 
-                   school decreases as the percentage of Native Americans within
-                   the school increases."),
-                 
-                 
+
+                 p("Paying close attention to the y-axis labels on both graphs, you may notice
+                 that the model predicts that there is a very small chance that
+                 a school district with even a very small number of Native American
+                 students also has a UCS program. By comparing the two graphs,
+                 we can see that income level is not a highly influential indicator
+                 of whether a school with Native American students has a UCS program.
+                 That said, there is a clear negative relationship between probability
+                 of a UCS program and percentage of students that are Native American,
+                 meaning that as the percentage of Native American
+                 students increases, the chance that the school district has a UCS program
+                 decreases.", align = "center"),
+               br(),
+
+
                  #watch the parentheses, make sure they line up and close around
                  #the right sections or things won't run, or won't run properly
-                 
-                 mainPanel(
-                     plotOutput("hundkmodel"),
-                     br(),
-                    
-                     #the br() adds a break between lines or plots, etc.
-                     
-                     plotOutput("medianmodel"))),
-                    
+
+               h4(strong("Predicted Probability of Special Olympic Unified Champion
+                 School (UCS) program by Percent of Native American Students"), align = "center"),
+               
+                 plotOutput("econ_models", width = "100%", height = "400px")),
+                  
+
       tabPanel("Models by Race",
-                     h3("Predicted Probability of UCS Program by Race"),
-                     p("My model predicts the likelihood 
-                 that a given public school in the state of Oklahoma has a 
-                 Special Olympics Unified Champion (UCS) School Program based on the
-                 the median household income and per capita income of the
-                 school's district as well as the percentage of Native American
-                 students in that school.",
-                       
-                       p("All of the below graphs reflect the likelihood of a UCS
-                       program within a given school district by the percentage 
-                       of a given racial group within the area. All graphs are
-                       predicted probabilities based on median household and 
-                       per capita income around the state."),
+               
+                     h2("Predicted Probability of Unified Champion School (UCS) program by Race"),
+               
                      br(),
-                     
-                     h4("Native American"),
-                     plotOutput("medianmodel"),
+               
+                     p("The plots below show the predicted likelihood
+                     that a given school district in the state of Oklahoma has a
+                     Special Olympics Unified Champion School (UCS) program,
+                     based on the median household and per capita income, as
+                     well as the racial demographics, of that
+                     school district."),
+
                      br(),
 
+                     h4(strong("Predicted Probability of Special Olympic Unified Champion
+                     School (UCS) program By Student Race")), align = "center",
+               
+               #the align = "center" line above makes the whole tab centered
+               
+                     plotOutput("three_model", width = "100%", height = "300px"),
+                    
+                     br(),
+                     br(),
+                     
+                     plotOutput("two_model", width = "67%", height = "300px")
+               ),
+               
+                     # h4("Native American"),
+                     # br(),
+                     #         
+                     # plotOutput("nativemodel"),
+                     # br(),
+                     # 
                      # h4("White"),
                      # plotOutput("whitemodel"),
                      # br(),
@@ -183,56 +189,64 @@ ui <-   navbarPage("Oklahoma School District Demographics",
                      # br(),
                      # 
                      # h4("Asian"),
-                     # plotOutput("asianmodel"),
-                    
-             )),
-    
+                     # plotOutput("asianmodel")),
+
     tabPanel("About",
+             h3("Project Focus"),
              
-                 h3("Project Background and Motivations"),
-                 p("Hello lost traveler! Welcome to my final project! I looked
-             at how racial demographics, particularly Native American
-             populations, correlated with median household income by school 
-             district around the state of Oklahoma. All of my data, like the
-             ingredients in most environmentally-conscious 
-             restaurants, are from local, sustainable sources. 
-             And by that I mean the American Community Survey's publicly
-             accessible datasets, available through",
-                   
-               a("NHGIS.", href = "https://data2.nhgis.org/"),
+             p("This project looks at how economic and racial demographics by
+                    school district correlate with the presence of Special
+                    Olympics Unified Champion School (UCS) programs. In other words,
+                    this project examines what racial and economic demographics
+                    are most likely to have a UCS program in their school district.
+                    Because the majority of school districts in Oklahoma include only a handful
+                    (or, in some cases, just a single) school, this project examines
+                    trends between race and income at the school district level."),
+             
+             h3("About the Models"),
+             
+             p("I used a logistic regression model to make the predictions included
+               in this project, due to the model's statistical ability to accurate predict binary outcomes
+               (which, in this case, was whether or not there was a UCS program
+               in the school district or not). This",
+             
+             a("site", href = "https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/"),
+             
+             "offers an overview of how logistic regressions work and how I
+             calculated the log odds ratios to interpret these models."),
+             
+             h3("Data"),
+                 
+             p("All of my data come from the American Community Survey's publicly accessible datasets,
+                available through",
+
+               a("NHGIS", href = "https://data2.nhgis.org/", ),
                
-             "Because school districts
-             are relatively small in
-             Oklahoma (and school demographic information was hard to publicly
-             access by individual school), I'm examining trends between race and
-             income by school district."),
-             
-             h3("Some Notes About the Data"),
-             p("All of my data come from NHGIS, as mentioned above, and the
-               datasets from the ACS (gathered via NHGIS) ultimately included only
-               513 school districts out of the 
-               537 that exist in Oklahoma according to online sources. That
-               said, with the 513 school districts, I was still able to map 
-               the entire state of Oklahoma by school district without any gaps
-               in my map. As I alluded to earlier as well, school data would yield
-               a more granular assessment of trends between demographics and 
-               economic status, but those data were too difficult to gather and 
-               bind effectively."),
-             
-             
-             h3("About Me"),
+                 "and the list of Special Olympics UCS schools in Oklahoma comes
+                  from the the Special Olympics",
+               
+               a("UCS website.", href = "https://resources.specialolympics.org/community-building/youth-and-school/unified-champion-schools")),
+
+            p("The datasets from the American Community Survey (gathered via NHGIS)
+            ultimately included only 513 school districts out of the 537 that exist in Oklahoma,
+               according to online sources. That said, with the 513 school districts,
+               I was still able to fully map the entire state of Oklahoma by school district
+               without any gaps."),
+          
+            h3("About Me"),
              p("My name is Liam Hall. I concentrate in Social Studies at
-             Harvard. You can reach me at liam_hall@college.harvard.edu.
-             This is a link to my", 
-              
-              
-              a("repo.", href = "https://github.com/LiamHall7/Oklahoma-Demographics-and-the-Probability-of-a-Special-Olympic-Program"))))
-    
-    
+             Harvard and work in the Legal Office at Special Olympics International.
+             You can reach me at liam_hall@college.harvard.edu
+             or at lhall@specialolympics.org. This is a link to my ",
+
+
+              a("project repository.", href = "https://github.com/LiamHall7/Oklahoma-Demographics-and-the-Probability-of-a-Special-Olympic-Program"))))
+
+
     #you can read in different leaflets to show different outputs, or use the
 #strategy I used below to substitute inputs.
 
-server <- function(input, output, session) {
+served <- function(input, output, session) {
     
     output$na_map <- renderLeaflet({
         
@@ -348,13 +362,13 @@ server <- function(input, output, session) {
             x = all_location$median_house_income
             y = "Income"
         }
-        if(input$econ == "Per Capita Income") {
+        else if(input$econ == "Per Capita Income") {
             x = all_location$capita_income
             y = "Income"
         }
         
         pal <- colorNumeric("viridis", NULL)
-        case_when
+        # case_when
             leaflet(all_location) %>%
             addTiles() %>%
             addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
@@ -363,54 +377,70 @@ server <- function(input, output, session) {
                       position = "topright",  opacity = 1.0)
                 
         
-    })
-    
+     })
+
     output$sook_map <- renderLeaflet({
-      
+
       factpal <- colorFactor(topo.colors(5), all_location$sook)
       
+      labels <- c("No", "Yes")
+
       leaflet(all_location) %>%
         addTiles() %>%
         addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
                     fillColor = ~ factpal(sook)) %>%
-        addLegend(pal = factpal, values = ~ sook, opacity = 1.0)
-      
+        addLegend(pal = factpal, values = ~ sook, title = "Has UCS",
+                  position = "topright",
+                  opacity = 1.0,
+                  
+                  
+                  labFormat = function(type, cuts, p){
+                    paste0(labels)
+                  
+                    #this function uses the labels list for the legend labels
+                      
+                  })
+
     })
 
-    output$hundkmodel <- renderPlot({
-        
+    output$econ_models <- renderPlot({
+
         # posterior <-
         #     stan_glm(data = all_school,
-        #              formula = sook ~ median_house_income + capita_income + 
+        #              formula = sook ~ median_house_income + capita_income +
         #                        na_percent,
         #              refresh = 0,
         #              family = binomial())
-        
+
         #commented out the posterior above because it isn't used as an input
-        #itself in the below code. All that is needed to graph are the values 
-        #from the posterior output, which can be done in the gather.rmd. 
-        
-        tibble(NA_Pct = 1:100, Intercept = -2.75621) %>% 
-            mutate(Probability = 
-                 
-                 exp(Intercept + (NA_Pct * -2.65835) + (.00003 * 10) + (.00005 * 10) + (.00006 * 7637))/
-                 
-                 (1 + exp(Intercept + (NA_Pct * -2.65835) + (.00003 * 10) + (.00005 * 10) + (.00006 * 7637)))) %>% 
-        
+        #itself in the below code. All that is needed to graph are the values
+        #from the posterior output, which can be done in the gather.rmd.
+      
+      
+    hundk_model<- 
+      
+        tibble(NA_Pct = 1:100, Intercept = -2.97848) %>%
+            mutate(Probability =
+
+                 exp(Intercept + (NA_Pct * -4.66471) + (.00001 * 10) + (.00002 * 10))/
+
+                 (1 + exp(Intercept + (NA_Pct * -4.66471) + (.00001 * 10) + (.00002 * 10)))) %>%
+
             ggplot(aes(NA_Pct, Probability)) +
-            geom_line() + 
-            theme_classic() + 
+            geom_line() +
+            theme_classic() +
             scale_y_continuous(labels = scales::percent) +
             xlim(0,10) +
-            labs(title = "Predicted Probability of Special Olympic Unified Champion
-                 School (UCS) Program Status",
-                 x = "Percentage of Native Americans Among students",
-                 y = "Probability of Special Olympic UCS") 
+            labs(x = "Percentage of Native American Students",
+                 y = "Probability of a UCS program",
+                 title = "100k Income")  +
       
+      theme(plot.title = element_text(hjust = .5, face = "bold"))
+
         # tibble(NA_Pct=1:100, Intercept = -2.99636) %>%
         #     mutate(Probability = exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 10) + (.00001 * 10))/
-        #                (1 + exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 10) + (.00001 * 10)))) %>% 
-        #     ggplot(aes(NA_Pct, Probability)) + 
+        #                (1 + exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 10) + (.00001 * 10)))) %>%
+        #     ggplot(aes(NA_Pct, Probability)) +
         #     geom_line() +
         #     theme_classic() +
         #     scale_y_continuous(labels = scales::percent) +
@@ -418,143 +448,199 @@ server <- function(input, output, session) {
         #     labs(title = "Predicted Probability of Special Olympic Unified Champion
         #          School (UCS) Program Status",
         #          x = "Percentage of Native Americans Among students",
-        #          y = "Probability of Special Olympic UCS") 
+        #          y = "Probability of Special Olympic UCS")
+
         
-            })
 #     output$table <- renderTable({table})
- 
-    
-    
-    output$medianmodel <- renderPlot({
-        
+
+      median_model <- 
         tibble(NA_Pct=1:100, Intercept = -2.99636) %>%
-            mutate(Probability = exp(Intercept + (NA_Pct * -2.65835) + (.00003 * 2.3985) + (.00005 * 4.7344) + (.00006 * 7637))/
-                       (1 + exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 2.3985) + (.00001 * 4.7344) + (.00006 * 7637)))) %>% 
-            ggplot(aes(NA_Pct, Probability)) + 
+            mutate(Probability = 
+                     
+                     exp(Intercept + (NA_Pct * -4.66471) + (.00001 * 2.4748) + (.00002 * 4.9380))/
+                     
+                     (1 + exp(Intercept + (NA_Pct * -4.66471) + (.00001 * 2.4748) + (.00002 * 4.9380)))) %>%
+        
+            ggplot(aes(NA_Pct, Probability)) +
             geom_line() +
             theme_classic() +
             scale_y_continuous(labels = scales::percent) +
             xlim(0,10) +
-            labs(title = "Predicted Probability of Special Olympic Unified Champion
-                 School (UCS) Program Status",
-                 x = "Percentage of Native Americans Among students",
-                 y = "Probability of Special Olympic UCS") 
+            labs(x = "Percentage of Native American Students",
+                 y = "Probability of a UCS program", 
+                 title = "Median Income")  +
         
-        
-        
-        
-    })
+        theme(plot.title = element_text(hjust = .5, face = "bold"))
 
-    output$nativemodel <- renderPlot({
       
-      tibble(NA_Pct=1:100, Intercept = -2.99636) %>%
-        mutate(Probability = exp(Intercept + (NA_Pct * -2.65835) + (.00003 * 2.3985) + (.00005 * 4.7344) + (.00006 * 7637))/
-                 (1 + exp(Intercept + (NA_Pct * -4.67385) + (.00002 * 2.3985) + (.00001 * 4.7344) + (.00006 * 7637)))) %>% 
-        ggplot(aes(NA_Pct, Probability)) + 
-        geom_line() +
-        theme_classic() +
-        scale_y_continuous(labels = scales::percent) +
-        xlim(0,10) +
-        labs(title = "Predicted Probability of Special Olympic Unified Champion
-                 School (UCS) Program Status",
-             x = "Percentage of Native Americans Among students",
-             y = "Probability of Special Olympic UCS") 
-    })
-    
-    
-    output$whitemodel <- renderPlot({
-      
-      tibble(W_Pct = 1:100, Intercept = -3.38573) %>% 
-        mutate(Probability = 
-                 
-                 exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637))/
-                 
-                 (1 + exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637)))) %>% 
-        
-        ggplot(aes(W_Pct, Probability)) +
-        geom_line() + 
-        theme_classic() + 
-        
-        scale_y_continuous(limits = c(0, .15),
-                           labels = scales::percent) +
-        
-        xlim(0,10) +
-        labs(title = "Predicted Probability of Special Olympic Unified Champion
-                 School (UCS) Program Status",
-             x = "White Student Percentage",
-             y = "Probability of Special Olympic UCS") 
-    })
-    
-    output$blackmodel <- renderPlot({
-      
-      tibble(W_Pct = 1:100, Intercept = -3.38573) %>% 
-        mutate(Probability = 
-                 
-                 exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637))/
-                 
-                 (1 + exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637)))) %>% 
-        
-        ggplot(aes(W_Pct, Probability)) +
-        geom_line() + 
-        theme_classic() + 
-        
-        scale_y_continuous(limits = c(0, .15),
-                           labels = scales::percent) +
-        
-        xlim(0,10) +
-        labs(title = "Predicted Probability of Special Olympic Unified Champion
-                 School (UCS) Program Status",
-             x = "White Student Percentage",
-             y = "Probability of Special Olympic UCS") 
-    })
-    
-    output$hispmodel <- renderPlot({
-      
-      tibble(W_Pct = 1:100, Intercept = -3.38573) %>% 
-        mutate(Probability = 
-                 
-                 exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637))/
-                 
-                 (1 + exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637)))) %>% 
-        
-        ggplot(aes(W_Pct, Probability)) +
-        geom_line() + 
-        theme_classic() + 
-        
-        scale_y_continuous(limits = c(0, .15),
-                           labels = scales::percent) +
-        
-        xlim(0,10) +
-        labs(title = "Predicted Probability of Special Olympic Unified Champion
-                 School (UCS) Program Status",
-             x = "White Student Percentage",
-             y = "Probability of Special Olympic UCS") 
-    })
-    
-    output$asianmodel <- renderPlot({
-      
-      tibble(W_Pct = 1:100, Intercept = -3.38573) %>% 
-        mutate(Probability = 
-                 
-                 exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637))/
-                 
-                 (1 + exp(Intercept + (W_Pct * .02249) + (.00003 * 10) + (-.00005 * 10) + (.00006 * 7637)))) %>% 
-        
-        ggplot(aes(W_Pct, Probability)) +
-        geom_line() + 
-        theme_classic() + 
-        
-        scale_y_continuous(limits = c(0, .15),
-          labels = scales::percent) +
-        
-            xlim(0,10) +
-        labs(title = "Predicted Probability of Special Olympic Unified Champion
-                 School (UCS) Program Status",
-             x = "White Student Percentage",
-             y = "Probability of Special Olympic UCS") 
-    })
+      grid.arrange(hundk_model, median_model, ncol = 2)
 
-    }
+     })
 
+  output$three_model <- renderPlot({
 
-shinyApp(ui = ui, server = server)
+     native_model <- 
+       
+          tibble(NA_Pct=1:100, Intercept = -2.75999) %>%
+            mutate(Probability = exp(Intercept + (NA_Pct * -2.72479) + (.00003 * 2.4748) + (-.00005 * 4.9380) + (.00006 * 7637))/
+                     (1 + exp(Intercept + (NA_Pct * -2.72479) + (.00003 * 2.4748) + (-.00005 * 4.9380) + (.00006 * 7637)))) %>%
+            ggplot(aes(NA_Pct, Probability)) +
+            geom_line() +
+            theme_classic() +
+            scale_y_continuous(labels = scales::percent) +
+          
+            scale_x_continuous(limits = c(0, 10),
+                               labels = function(NA_Pct) {
+                                 
+                                 paste0(NA_Pct, "%")
+                                 
+                               }) +
+            
+            labs(x = "Native American student Percentage",
+                 title = "Native American") +
+       
+       theme(plot.title = element_text(hjust = .5, face = "bold"))
+     
+     
+                 #y = "Probability of Special Olympic UCS")
+        
+    
+    white_model <-
+      
+          tibble(W_Pct = 1:100, Intercept = -3.39546) %>%
+            mutate(Probability =
+    
+                     exp(Intercept + (W_Pct * -.00433) + (.00003 * 2.4748) + (-.00005 * 4.9380) + (.00006 * 7637))/
+    
+                     (1 + exp(Intercept + (W_Pct * -.00433) + (.00003 * 2.4748) + (-.00005 * 4.9380) + (.00006 * 7637)))) %>%
+    
+            ggplot(aes(W_Pct, Probability)) +
+            geom_line() +
+            theme_classic() +
+    
+            scale_y_continuous(limits = c(0, .08),
+                               labels = scales::percent) +
+    
+            scale_x_continuous(limits = c(0, 10),
+                               labels = function(NA_Pct) {
+                                 
+                                 paste0(NA_Pct, "%")
+                                 
+                               }) +
+            
+            labs(x = "White Student Percentage", 
+                 title = "White") +
+      
+      theme(plot.title = element_text(hjust = .5, face = "bold"))
+                 #y = "Probability of Special Olympic UCS")
+        
+    
+    black_model <-
+      
+          tibble(B_Pct = 1:100, Intercept = -3.54074) %>%
+            mutate(Probability =
+    
+                     exp(Intercept + (B_Pct * 2.81166) + (.00003 * 2.4748) + (-.00004 * 4.9380) + (.00006 * 7637))/
+    
+                     (1 + exp(Intercept + (B_Pct * 2.81166) + (.00003 * 2.4748) + (-.00004 * 4.9380) + (.00006 * 7637)))) %>%
+    
+            ggplot(aes(B_Pct, Probability)) +
+            geom_line() +
+            theme_classic() +
+    
+            scale_y_continuous(limits = c(0, 1),
+                               labels = scales::percent) +
+    
+            scale_x_continuous(limits = c(0, 10),
+                               labels = function(NA_Pct) {
+                                 
+                                 paste0(NA_Pct, "%")
+                                 
+                               }) +
+            
+            labs(x = "Black Student Percentage",
+                 title = "Black") +
+      
+      theme(plot.title = element_text(hjust = .5, face = "bold"))
+    
+                 #y = "Probability of Special Olympic UCS")
+    
+    grid.arrange(native_model, white_model, black_model,
+                ncol = 3)
+    
+  })
+    
+  output$two_model <- renderPlot({
+    
+    hisp_model <- 
+      
+          tibble(H_Pct = 1:100, Intercept = -3.22811) %>%
+            mutate(Probability =
+    
+                     exp(Intercept + (H_Pct * -1.82599) + (.00003 * 2.4748) + (-.00005 * 4.9380) + (.00006 * 7637))/
+    
+                     (1 + exp(Intercept + (H_Pct * -1.82599) + (.00003 * 2.4748) + (-.00005 * 4.9380) + (.00006 * 7637)))) %>%
+    
+            ggplot(aes(H_Pct, Probability)) +
+            geom_line() +
+            theme_classic() +
+    
+            scale_y_continuous(limits = c(0, .15),
+                               labels = scales::percent) +
+    
+            scale_x_continuous(limits = c(0, 10),
+                               labels = function(NA_Pct) {
+                                 
+                                 paste0(NA_Pct, "%")
+                                 
+                               }) +
+            
+            labs(x = "Hispanic Student Percentage",
+                 title = "Hispanic") +
+      
+      theme(plot.title = element_text(hjust = .5, face = "bold"))
+    
+                 #y = "Probability of Special Olympic UCS")
+
+    asian_model <- 
+      
+          tibble(A_Pct = 1:100, Intercept = -3.22332) %>%
+            mutate(Probability =
+    
+                     exp(Intercept + (A_Pct * 21.06048) + (.00002 * 2.4748) + (-.00004 * 4.9380) + (.00005 * 7637))/
+    
+                     (1 + exp(Intercept + (A_Pct * 21.06048) + (.00002 * 2.4748) + (-.00004 * 4.9380) + (.00005 * 7637)))) %>%
+    
+            ggplot(aes(A_Pct, Probability)) +
+            geom_line() +
+            theme_classic() +
+    
+            scale_y_continuous(limits = c(0, 1),
+              labels = scales::percent) +
+            
+            scale_x_continuous(limits = c(0, 10),
+                               labels = function(NA_Pct) {
+                                 
+                                 paste0(NA_Pct, "%")
+                                 
+                               }) +
+            
+            labs(x = "Asian Student Percentage",
+                 title = "Asian") +
+      
+      theme(plot.title = element_text(hjust = .5, face = "bold"))
+    
+                 #y = "Probability of Special Olympic UCS")
+
+    
+    grid.arrange(hisp_model, asian_model,
+                 nrow = 1)
+    
+
+    
+        })
+  
+
+     }
+
+shinyApp(ui = ui, server = served)
